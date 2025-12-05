@@ -1,5 +1,6 @@
+"use client";
 import { useState } from "react";
-
+import { useRouter } from "next/navigation";
 import {
   Menu,
   X,
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
+import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,13 +54,13 @@ export default function Navbar({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const { theme, toggleTheme } = useThemeStore();
-
+  const router = useRouter();
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await logout();
+      await signOut();
       toast.success("Signed out successfully");
-      navigate("/login", { replace: true });
+      router.push("/login");
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Failed to sign out");

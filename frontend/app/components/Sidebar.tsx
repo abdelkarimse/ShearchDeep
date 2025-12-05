@@ -90,7 +90,7 @@ export const Sidebar = ({ onItemClick, collapsed = false }: SidebarProps) => {
           "w-full justify-start gap-3 transition-all duration-200",
           active && "bg-primary/10 text-primary font-medium",
           !collapsed && "px-3",
-          collapsed && "px-2 justify-center",
+          collapsed && "px-2 justify-center"
         )}
         onClick={() => handleItemClick(item)}
         onMouseEnter={() => setHoveredItem(item.id)}
@@ -98,8 +98,8 @@ export const Sidebar = ({ onItemClick, collapsed = false }: SidebarProps) => {
       >
         <Icon
           className={cn(
-            "h-5 w-5 flex-shrink-0",
-            active ? "text-primary" : "text-muted-foreground",
+            "h-5 w-5 shrink-0",
+            active ? "text-primary" : "text-muted-foreground"
           )}
         />
         {!collapsed && (
@@ -140,8 +140,8 @@ export const Sidebar = ({ onItemClick, collapsed = false }: SidebarProps) => {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
-        collapsed ? "w-16" : "w-64",
+        "fixed left-0 top-16 z-40 h-[calc(100vh-4rem)] border-r bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-all duration-300",
+        collapsed ? "w-16" : "w-64"
       )}
     >
       <ScrollArea className="h-full py-4">
