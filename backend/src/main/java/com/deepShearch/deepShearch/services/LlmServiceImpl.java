@@ -2,8 +2,9 @@ package com.deepShearch.deepShearch.services;
 
 import com.deepShearch.deepShearch.Dto.AiSumarizeResponse;
 import com.deepShearch.deepShearch.Dto.MayanDocumentPageOCRResponse;
-
+import com.deepShearch.deepShearch.Model.Document;
 import com.deepShearch.deepShearch.Model.SummerizeDoc;
+import com.deepShearch.deepShearch.repository.DocumentRepository;
 import com.deepShearch.deepShearch.repository.SummerizeDocRepository;
 import com.deepShearch.deepShearch.services.interfaces.Llmservice;
 import com.deepShearch.deepShearch.services.interfaces.MayanService;
@@ -26,14 +27,16 @@ public class LlmServiceImpl implements Llmservice {
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper;
     private final MayanService mayanService;
+    private final DocumentRepository documentRepository;
     private final SummerizeDocRepository    sumerizeDocRepository;
 
 
     public LlmServiceImpl(ChatClient.Builder chatClientBuilder,
-                          ObjectMapper objectMapper,MayanService mayanService, SummerizeDocRepository sumerizeDocRepository) {
+                          ObjectMapper objectMapper,MayanService mayanService, DocumentRepository documentRepository, SummerizeDocRepository sumerizeDocRepository) {
         this.mayanService = mayanService;
         this.objectMapper = objectMapper;
         this.chatClient = chatClientBuilder.build();
+        this.documentRepository = documentRepository;
         this.sumerizeDocRepository = sumerizeDocRepository;
     }
 
@@ -50,7 +53,14 @@ public class LlmServiceImpl implements Llmservice {
                     List.of()
             );
         }
-        Optional<SummerizeDoc> existingSummary = sumerizeDocRepository.findByDocumentIdAndDocumentVersionIdAndDocumentVersionPageId(docId,documentVersionId, documentVersionPageId);
+        Document document = documentRepository.findById(Long.parseLong(docId)).orElse(null);
+        if (document == null) {
+            return new AiSumarizeResponse(
+                    "Document not found.",
+                    List.of()
+            );
+        }
+        Optional<SummerizeDoc> existingSummary = sumerizeDocRepository.findByDocumentIdAndDocumentVersionIdAndDocumentVersionPageId(Long.parseLong(docId),documentVersionId, documentVersionPageId);
         if (existingSummary.isPresent()) {
             SummerizeDoc summaryDoc = existingSummary.get();
             List<String> keywords = objectMapper.convertValue(summaryDoc.getKeyWords(), List.class);
@@ -93,7 +103,7 @@ public class LlmServiceImpl implements Llmservice {
             List<String> keywords = new ArrayList<>();
             json.get("keywords").forEach(node -> keywords.add(node.asText()));
             SummerizeDoc summerizeDoc = new SummerizeDoc();
-            summerizeDoc.setDocumentId(docId);
+            summerizeDoc.setDocument(document);
             summerizeDoc.setDocumentVersionId(documentVersionId);
             summerizeDoc.setDocumentVersionPageId(documentVersionPageId);
             summerizeDoc.setSummary(summary);

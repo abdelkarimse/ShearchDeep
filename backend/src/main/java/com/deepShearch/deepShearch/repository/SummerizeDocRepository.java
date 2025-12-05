@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface SummerizeDocRepository extends JpaRepository<SummerizeDoc, String> {
     Optional<SummerizeDoc> findByDocumentIdAndDocumentVersionIdAndDocumentVersionPageId(
-            String documentId,
+            Long documentId,
             String documentVersionId, 
             String documentVersionPageId
     );

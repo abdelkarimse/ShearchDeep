@@ -18,7 +18,13 @@ public interface MayanService {
      */
     Mono<MayanDocumentsListResponse> getDocuments(String ordering, Integer page, Integer pageSize);
     
-
+    /**
+     * Create a new document in Mayan EDMS
+     * @param request Document creation request
+     * @return Mono of created MayanDocumentResponse
+     */
+    Mono<MayanDocumentResponse> createDocument(MayanDocumentCreateRequest request);
+    
 
     Mono<MayanDocumentResponse> uploadDocument(MayanDocumentUploadRequest request);
     
