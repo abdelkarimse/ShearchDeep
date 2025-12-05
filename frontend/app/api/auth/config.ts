@@ -21,8 +21,7 @@ export const authOptions: NextAuthOptions = {
           string,
           unknown
         >;
-
-        console.log("Full decoded token:", decodedToken);
+        console.log("token", account.access_token);
 
         // Store tokens
         token.accessToken = account.access_token as string;
@@ -95,7 +94,7 @@ export const authOptions: NextAuthOptions = {
         // Store entire decoded token for full access
         token.decodedToken = decodedToken;
       }
-
+      console.log("JWT Token:", token);
       return token;
     },
 

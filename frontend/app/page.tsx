@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();
-
+  console.log("osk", session);
   useEffect(() => {
     console.log("osk", session?.user);
     if (status === "loading") return;
