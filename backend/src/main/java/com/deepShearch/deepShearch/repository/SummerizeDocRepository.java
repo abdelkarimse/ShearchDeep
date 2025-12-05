@@ -1,4 +1,14 @@
 package com.deepShearch.deepShearch.repository;
 
-interface SummerizeDoc extends org.springframework.data.jpa.repository.JpaRepository<com.deepShearch.deepShearch.Model.SummerizeDoc, java.lang.String> {
+import com.deepShearch.deepShearch.Model.SummerizeDoc;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface SummerizeDocRepository extends JpaRepository<SummerizeDoc, String> {
+    Optional<SummerizeDoc> findByDocumentIdAndDocumentVersionIdAndDocumentVersionPageId(
+            Long documentId,
+            String documentVersionId, 
+            String documentVersionPageId
+    );
 }

@@ -3,7 +3,9 @@ server:
 
 spring:
   application:
-    name: edumcpclient\
+    name: deepShearch\
+  main:
+    allow-bean-definition-overriding: true
   web:
     cors:
       allowed-origins: "*"
@@ -15,6 +17,11 @@ spring:
     user:
       name: none
       password: none
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/auth/realms/master
+          jwk-set-uri: http://localhost:8080/auth/realms/master/protocol/openid-connect/certs
   ai:
     ollama:
       base-url: http://localhost:11434
@@ -32,20 +39,20 @@ spring:
             StudyPlusAdminAIClient:
               url: http://localhost:8081
   datasource:
-    url: jdbc:postgresql://localhost:5432/chatdb
+    url: jdbc:postgresql://localhost:5432/DeepShearch
     username: admin
     password: 123456
   jpa:
     hibernate:
       ddl-auto: update # change to 'validate' in production
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-jwt:
-  secret: qw41wqe57r4we2qr4weq874we23qd43weq58ew74rqDFfFe7r2e7wf7ewf2v7F7
-  expiration-30j: 25920000000
 
 logging:
   level:
@@ -54,3 +61,7 @@ logging:
     com.example.edumcpclient: DEBUG
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
+
+host:
+  mayan:
+    url: http://192.168.40.255

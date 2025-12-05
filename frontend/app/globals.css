@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --teal: #499FA4;
+  --slate: #BEC6C3;
+  --tangerine: #E9BC8B;
+  --charcoal: #3D4A55;
+}

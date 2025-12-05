@@ -5,11 +5,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AiSumarizeResponse {
-    private String summary;
-    private List<String> keywords;
-
+public class MayanDocumentsListResponse {
+    
+    private Integer count;
+    
+    private String next;
+    
+    private String previous;
+    
+    private List<MayanDocumentResponse> results;
 }
