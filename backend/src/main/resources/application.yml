@@ -1,9 +1,9 @@
 server:
-  port: 8082
+  port: ${SERVER_PORT:8082}
 
 spring:
   application:
-    name: deepShearch\
+    name: deepShearch
   main:
     allow-bean-definition-overriding: true
   web:
@@ -39,12 +39,12 @@ spring:
             StudyPlusAdminAIClient:
               url: http://localhost:8081
   datasource:
-    url: jdbc:postgresql://localhost:5432/DeepShearch
-    username: admin
-    password: 123456
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/DeepShearch}
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
   jpa:
     hibernate:
-      ddl-auto: update # change to 'validate' in production
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
         implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyJpaCompliantImpl
@@ -64,4 +64,4 @@ logging:
 
 host:
   mayan:
-    url: http://192.168.40.255
+    url: ${HOST_MAYAN_URL:http://127.0.0.1:80}

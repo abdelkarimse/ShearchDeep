@@ -1,19 +1,16 @@
 package com.deepShearch.deepShearch.services;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.deepShearch.deepShearch.Dto.MayanDocumentCreateRequest;
@@ -35,11 +32,15 @@ import reactor.netty.http.client.HttpClient;
 public class MayanServiceImpl implements MayanService {
     
     private final WebClient webClient;
+    private final RestTemplate restTemplate;
+    private final String mayanUrl;
     
     private static final String USERNAME = "admin";
-    private static final String PASSWORD = "anYRqN8wX5";
+    private static final String PASSWORD = "UpAyGCbqKd";
 
     public MayanServiceImpl(@Value("${host.mayan.url}") String mayanUrl) {
+        this.mayanUrl = mayanUrl;
+        
         // Configure HttpClient with proper settings for file uploads
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
@@ -59,6 +60,9 @@ public class MayanServiceImpl implements MayanService {
                 .defaultHeader("Authorization", authHeader)
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024)) // 50MB
                 .build();
+        
+        // Initialize RestTemplate for multipart uploads
+        this.restTemplate = new RestTemplate();
     }
     
     @Override
@@ -68,7 +72,7 @@ public class MayanServiceImpl implements MayanService {
         
         return webClient.get()
                 .uri(uriBuilder -> {
-                    var builder = uriBuilder.path("/api/documents/");
+                    var builder = uriBuilder.path("/api/v4/documents/");
                     if (ordering != null) {
                         builder.queryParam("_ordering", ordering);
                     }
@@ -87,20 +91,7 @@ public class MayanServiceImpl implements MayanService {
                 .doOnError(error -> log.error("Error fetching documents from Mayan EDMS", error));
     }
     
-    @Override
-    public Mono<MayanDocumentResponse> createDocument(MayanDocumentCreateRequest request) {
-        log.info("Creating document in Mayan EDMS - label: {}", request.getLabel());
-        
-        return webClient.post()
-                .uri("/api/documents")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(MayanDocumentResponse.class)
-                .doOnSuccess(response -> log.info("Successfully created document with ID: {}", 
-                        response != null ? response.getId() : null))
-                .doOnError(error -> log.error("Error creating document in Mayan EDMS", error));
-    }
-    
+
     @Override
     public Mono<MayanDocumentResponse> uploadDocument(MayanDocumentUploadRequest request) {
 
@@ -117,76 +108,70 @@ public class MayanServiceImpl implements MayanService {
             return Mono.error(new IllegalArgumentException("document_type_id is required"));
         }
         
-        try {
-            // Read file content
+        return Mono.fromCallable(() -> {
             byte[] fileBytes = request.getFile().getBytes();
             String originalFilename = request.getFile().getOriginalFilename();
-            String contentType = request.getFile().getContentType();
             
-            log.info("Preparing upload - File size: {} bytes, Filename: {}, ContentType: {}, DocumentTypeId: {}", 
-                    fileBytes.length, originalFilename, contentType, request.getDocumentTypeId());
+            log.info("Preparing upload - File size: {} bytes, Filename: {}, DocumentTypeId: {}", 
+                    fileBytes.length, originalFilename, request.getDocumentTypeId());
             
-            // Use MultiValueMap with proper Resource wrapping
-            MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
+            // Build proper multipart body
+            String boundary = "----FormBoundary" + System.currentTimeMillis();
+            StringBuilder body = new StringBuilder();
             
-            // Add document_type_id as plain string
-            parts.add("document_type_id", String.valueOf(request.getDocumentTypeId()));
-            log.debug("Added document_type_id part: {}", request.getDocumentTypeId());
-            
-            // Add file as ByteArrayResource with filename
-            Resource fileResource = new ByteArrayResource(fileBytes) {
-                @Override
-                public String getFilename() {
-                    return originalFilename;
-                }
-            };
-            parts.add("file", fileResource);
-            log.debug("Added file part: {} ({} bytes, type: {})", originalFilename, fileBytes.length, contentType);
-            
-            // Add optional text fields as plain strings
             if (request.getLabel() != null && !request.getLabel().isEmpty()) {
-                parts.add("label", request.getLabel());
-                log.debug("Added label part: {}", request.getLabel());
+                body.append("--").append(boundary).append("\r\n")
+                    .append("Content-Disposition: form-data; name=\"label\"\r\n\r\n")
+                    .append(request.getLabel()).append("\r\n");
             }
             
             if (request.getDescription() != null && !request.getDescription().isEmpty()) {
-                parts.add("description", request.getDescription());
-                log.debug("Added description part");
+                body.append("--").append(boundary).append("\r\n")
+                    .append("Content-Disposition: form-data; name=\"description\"\r\n\r\n")
+                    .append(request.getDescription()).append("\r\n");
             }
+            
+            body.append("--").append(boundary).append("\r\n")
+                .append("Content-Disposition: form-data; name=\"document_type_id\"\r\n\r\n")
+                .append(request.getDocumentTypeId()).append("\r\n");
             
             if (request.getLanguage() != null && !request.getLanguage().isEmpty()) {
-                parts.add("language", request.getLanguage());
-                log.debug("Added language part: {}", request.getLanguage());
+                body.append("--").append(boundary).append("\r\n")
+                    .append("Content-Disposition: form-data; name=\"language\"\r\n\r\n")
+                    .append(request.getLanguage()).append("\r\n");
             }
-
-            log.info("Sending multipart request to Mayan EDMS...");
             
-            return webClient.post()
-                    .uri("/api/v4/documents/upload/")
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(parts))
-                    .retrieve()
-                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                    .flatMap(errorBody -> {
-                                        log.error("Error response from Mayan EDMS: Status={}, Body={}", 
-                                                clientResponse.statusCode(), errorBody);
-                                        return Mono.error(new RuntimeException(
-                                                String.format("Mayan API error: %s - %s", 
-                                                        clientResponse.statusCode(), errorBody)));
-                                    }))
-                    .bodyToMono(MayanDocumentResponse.class)
-                    .doOnSuccess(response -> log.info("Successfully uploaded document with ID: {}", 
-                            response != null ? response.getId() : null))
-                    .doOnError(error -> log.error("Error uploading document to Mayan EDMS", error));
+            body.append("--").append(boundary).append("\r\n")
+                .append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(originalFilename).append("\"\r\n")
+                .append("Content-Type: application/octet-stream\r\n\r\n");
 
-        } catch (IOException e) {
-            log.error("Error reading file content", e);
-            return Mono.error(new RuntimeException("Failed to read file content", e));
-        } catch (Exception e) {
-            log.error("Error preparing multipart request", e);
-            return Mono.error(new RuntimeException("Failed to prepare upload request", e));
-        }
+            // Convert string parts to bytes
+            byte[] bodyStart = body.toString().getBytes();
+            byte[] boundaryEnd = ("\r\n--" + boundary + "--\r\n").getBytes();
+            
+            // Create full body
+            byte[] fullBody = new byte[bodyStart.length + fileBytes.length + boundaryEnd.length];
+            System.arraycopy(bodyStart, 0, fullBody, 0, bodyStart.length);
+            System.arraycopy(fileBytes, 0, fullBody, bodyStart.length, fileBytes.length);
+            System.arraycopy(boundaryEnd, 0, fullBody, bodyStart.length + fileBytes.length, boundaryEnd.length);
+            
+            // Create HTTP request
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.valueOf("multipart/form-data; boundary=" + boundary));
+            headers.set("Authorization", "Basic " + Base64.getEncoder()
+                    .encodeToString((USERNAME + ":" + PASSWORD).getBytes()));
+            headers.setContentLength(fullBody.length);
+            
+            HttpEntity<byte[]> entity = new HttpEntity<>(fullBody, headers);
+            
+            log.info("Sending multipart request to Mayan EDMS... (Body size: {} bytes)", fullBody.length);
+            
+            return restTemplate.postForObject(mayanUrl + "/api/v4/documents/upload/", 
+                    entity, MayanDocumentResponse.class);
+                    
+        }).doOnSuccess(response -> log.info("Successfully uploaded document with ID: {}", 
+                response != null ? response.getId() : null))
+        .doOnError(error -> log.error("Error uploading document to Mayan EDMS", error));
     }
     
     @Override
@@ -217,4 +202,5 @@ public class MayanServiceImpl implements MayanService {
                 .doOnError(error -> log.error("Error fetching OCR content from Mayan EDMS - documentId: {}, pageId: {}", 
                         documentId, documentVersionPageId, error));
     }
+
 }

@@ -18,10 +18,7 @@ public class SummerizeDoc {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
-
-    @OneToOne
-    @JoinColumn(name = "document_id", referencedColumnName = "id")
-    private Document document;
+    private String documentId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String summary;
