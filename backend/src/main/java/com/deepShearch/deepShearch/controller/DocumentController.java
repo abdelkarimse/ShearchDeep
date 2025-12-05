@@ -1,30 +1,20 @@
 package com.deepShearch.deepShearch.controller;
-
-import java.util.List;
-
-import com.deepShearch.deepShearch.Dto.AiSumarizeResponse;
-import com.deepShearch.deepShearch.Dto.MayanDocumentCreateRequest;
-import com.deepShearch.deepShearch.Dto.MayanDocumentPageOCRResponse;
-import com.deepShearch.deepShearch.Dto.MayanDocumentResponse;
-import com.deepShearch.deepShearch.Dto.MayanDocumentUploadRequest;
-import com.deepShearch.deepShearch.Dto.MayanDocumentsListResponse;
-import com.deepShearch.deepShearch.services.interfaces.Llmservice;
-import com.deepShearch.deepShearch.services.interfaces.MayanService;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.deepShearch.deepShearch.Model.Document;
-import com.deepShearch.deepShearch.services.interfaces.DocumentService;
+import com.deepShearch.deepShearch.Dto.AiSumarizeResponse;
+import com.deepShearch.deepShearch.Dto.MayanDocumentResponse;
+import com.deepShearch.deepShearch.Dto.MayanDocumentUploadRequest;
+import com.deepShearch.deepShearch.Dto.MayanDocumentsListResponse;
+import com.deepShearch.deepShearch.services.interfaces.Llmservice;
+import com.deepShearch.deepShearch.services.interfaces.MayanService;
 
 import lombok.AllArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -33,59 +23,17 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 @RequestMapping("/api/V1/documents")
 public class DocumentController {
-    private DocumentService documentService;
     private Llmservice llmservice;
     private MayanService mayanService;
 
-    @GetMapping
-    public ResponseEntity<List<Document>> getAllDocuments() {
-        return ResponseEntity.ok(documentService.getAllDocuments());
-    }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Document> getDocumentById(@PathVariable Long id) {
-        return documentService.getDocumentById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Document> createDocument(@RequestBody Document document) {
-        Document savedDocument = documentService.saveDocument(document);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedDocument);
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Document> updateDocument(@PathVariable Long id, @RequestBody Document document) {
-        return documentService.getDocumentById(id)
-                .map(existingDoc -> {
-                    document.setId(id);
-                    Document updatedDocument = documentService.saveDocument(document);
-                    return ResponseEntity.ok(updatedDocument);
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
-        if (documentService.getDocumentById(id).isPresent()) {
-            documentService.deleteDocument(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @PostMapping("/Summrize")
+    @PostMapping("/Summrize/{documentId}/versions/{documentVersionId}/pages/{documentVersionPageId}/user/{userId}")
     public ResponseEntity<AiSumarizeResponse> SummrizeDocument(@PathVariable String documentId,
                                                                @PathVariable String documentVersionId,
                                                                @PathVariable String documentVersionPageId, @PathVariable String userId) {
         return ResponseEntity.ok(llmservice.generateSummary(documentId, documentVersionId, documentVersionPageId, userId));
     }
 
-    // Mayan EDMS Integration Endpoints
 
     /**
      * Get list of documents from Mayan EDMS
@@ -104,7 +52,6 @@ public class DocumentController {
     }
 
     /**
-<<<<<<< HEAD
      * Upload a new document with file to Mayan EDMS
      *
      * @param label          Label for the document (optional)
@@ -112,26 +59,6 @@ public class DocumentController {
      * @param documentTypeId Required document type ID
      * @param language       Language code (optional)
      * @param file           The file to upload (required)
-=======
-     * Create a new document in Mayan EDMS
-     *
-     * @param request Document creation request
-     * @return Mono of created document
-     */
-    @PostMapping("/mayan")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public Mono<MayanDocumentResponse> createMayanDocument(@RequestBody MayanDocumentCreateRequest request) {
-        return mayanService.createDocument(request);
-    }
-
-    /**
-     * Upload a new document with file to Mayan EDMS
-     *
-     * @param label Label for the document (optional)
-     * @param description Description of the document (optional)
-     * @param documentTypeId Required document type ID
-     * @param language Language code (optional)
-     * @param file The file to upload (required)
      * @return Mono of created document
      */
     @PostMapping(value = "/mayan/upload", consumes = "multipart/form-data")
@@ -142,6 +69,7 @@ public class DocumentController {
             @RequestParam("document_type_id") Integer documentTypeId,
             @RequestParam(required = false) String language,
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+
         MayanDocumentUploadRequest request = MayanDocumentUploadRequest.builder()
                 .label(label)
                 .description(description)
@@ -149,6 +77,7 @@ public class DocumentController {
                 .language(language)
                 .file(file)
                 .build();
+
         return mayanService.uploadDocument(request);
     }
 
@@ -165,39 +94,16 @@ public class DocumentController {
     }
 
 
-    @GetMapping("/mayan/{documentId}/versions/{documentVersionId}/pages/{documentVersionPageId}/ocr")
-    public Mono<MayanDocumentPageOCRResponse> getDocumentPageOCR(
-            @PathVariable String documentId,
-            @PathVariable String documentVersionId,
-            @PathVariable String documentVersionPageId) {
-        return mayanService.getDocumentPageOCR(documentId, documentVersionId, documentVersionPageId);
-    }
 
-    /**
-     * Test upload endpoint - Upload a document with file to Mayan EDMS
-     *
-<<<<<<< HEAD
-     * @param label          Label for the document (optional)
-     * @param description    Description of the document (optional)
-     * @param documentTypeId Required document type ID
-     * @param language       Language code (optional)
-     * @param file           The file to upload (required)
-=======
-     * @param label Label for the document (optional)
-     * @param description Description of the document (optional)
-     * @param documentTypeId Required document type ID
-     * @param language Language code (optional)
-     * @param file The file to upload (required)
->>>>>>> bbfc4bf323b9b9eb45e354f0e7dd1db01277e4ec
-     * @return Mono of created document
-     */
     @PostMapping(value = "/mayan/uplodes", consumes = "multipart/form-data")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Mono<MayanDocumentResponse> testUpload(
             @RequestParam(required = false) String label,
             @RequestParam(required = false) String description,
             @RequestParam("document_type_id") Integer documentTypeId,
             @RequestParam(required = false) String language,
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+
         MayanDocumentUploadRequest request = MayanDocumentUploadRequest.builder()
                 .label(label)
                 .description(description)
@@ -205,6 +111,7 @@ public class DocumentController {
                 .language(language)
                 .file(file)
                 .build();
+
         return mayanService.uploadDocument(request);
     }
 

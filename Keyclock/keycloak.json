@@ -1,0 +1,78 @@
+{
+  "realm": "MyRealmDeepSearch",
+  "enabled": true,
+
+  "clients": [
+    {
+      "clientId": "my-DeepSearch-app",
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "pkceEnabled": true,
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "description": "This switch defines the type of OIDC client. When it is ON, the type is confidential access. When it is OFF, the type is public access.",
+      "enabled": true
+    },
+    {
+      "clientId": "backend-DeepSearch-service",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "secret": "789c4e5f-1234-5678-9abc-def012345678",
+      "redirectUris": [
+        "http://localhost:8082/*"
+      ],
+      "description": "This switch defines the type of OIDC client. When it is ON, the type is confidential access. When it is OFF, the type is public access.",
+      "enabled": true
+    }
+  ],
+
+  "roles": {
+    "realm": [
+      { "name": "ADMIN" },
+      { "name": "USER" }
+    ]
+  },
+
+  "users": [
+    {
+      "username": "adminuser",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "InitialAdminPassword"
+        }
+      ],
+      "realmRoles": ["ADMIN", "USER"]
+    }
+  ],
+
+  "authenticationFlows": [],
+  "browserFlow": "browser",
+  "registrationFlow": "registration",
+
+  "identityProviders": [
+    {
+      "internalId": "google-idp-internal-id",
+      "providerId": "google",
+      "enabled": true,
+      "alias": "google",
+      "displayName": "Sign in with Google",
+      "config": {
+        "clientId": "YOUR_GOOGLE_CLIENT_ID",
+        "clientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
+      }
+    }
+  ]
+}

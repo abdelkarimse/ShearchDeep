@@ -17,7 +17,7 @@ class SecurityCongfig {
                .csrf().disable()
                .authorizeHttpRequests(auth -> auth
                        .requestMatchers("/api/V1/documents/mayan/**").permitAll()
-                       .anyRequest().authenticated())
+                       .anyRequest().permitAll())
         .addFilterAfter(new CustomSecurityFilter(), BasicAuthenticationFilter.class)
         .build();
     }

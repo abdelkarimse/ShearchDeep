@@ -11,7 +11,7 @@ class KeycloakAdminClientConfig {
     private final String serverUrl = "http://192.168.40.255/:80";
     private final String realm = "master";
     private final String clientId = "spring-boot";
-    private final String clientSecret = "ekhnmyrdoYyjdriDTuFTxiK0JD1rCn4I"; // The client secret
+    private final String clientSecret = "ekhnmyrdoYyjdriDTuFTxiK0JD1rCn4I";
 
     @Bean
     public Keycloak keycloakAdminClient() {
@@ -20,7 +20,7 @@ class KeycloakAdminClientConfig {
                 .realm(realm)
                 .clientId(clientId)
                 .clientSecret(clientSecret)
-                .grantType(OAuth2Constants.CLIENT_CREDENTIALS) // Use client credentials flow for service account
+                .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
                 .build();
     }
 }

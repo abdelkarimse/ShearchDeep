@@ -8,8 +8,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,13 +24,14 @@ public class SummerizeDoc {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String id;
 
-    @OneToOne
-    @JoinColumn(name = "document_id", referencedColumnName = "id")
-    private Document document;
+        @Column(nullable = false)
+    private String title;
+
+    private String documentId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String summary;
-    private List<String> KeyWords;
+    private List<String> keyWords;
     private String documentVersionId;
     private String documentVersionPageId;
     private String userId;

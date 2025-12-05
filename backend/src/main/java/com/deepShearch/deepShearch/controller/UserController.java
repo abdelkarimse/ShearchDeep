@@ -2,9 +2,14 @@ package com.deepShearch.deepShearch.controller;
 
 import java.util.List;
 
+import com.deepShearch.deepShearch.Dto.WebsocketMessagae;
+import com.deepShearch.deepShearch.Model.Notification;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,11 +31,23 @@ import lombok.AllArgsConstructor;
 @PreAuthorize("hasRole('ROLE_ADMIN')")
 public class UserController {
     private UserService userService;
+    private SimpMessagingTemplate messagingTemplate;
 
     @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<UserRepresentation>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
+    @MessageMapping("/action")
+    public void makedAllAsRead(@RequestBody WebsocketMessagae message) {
+        if (message == null || message.getSenderId() == null) {
+            return;
+        }
+        // todo: process the action from message
+        messagingTemplate.convertAndSendToUser(message.getSenderId(), "/queue/action", null);
+    }
+
+
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserRepresentation> getUserById(@PathVariable String userId) {
