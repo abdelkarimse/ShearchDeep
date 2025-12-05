@@ -6,6 +6,7 @@ export default function UserStatus() {
   const { data: session } = useSession();
 
   if (session) {
+    console.log("User session:", session);
     return (
       <div>
         <p>
