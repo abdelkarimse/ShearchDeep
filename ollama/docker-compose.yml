@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    volumes:
+      - ollama_data:/root/.ollama   # Persist models
+    ports:
+      - "11434:11434"
+    restart: always
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "
+        ollama serve &
+        sleep 4 &&
+        echo '📦 Pulling Qwen 1.7B...' &&
+        ollama pull qwen3:1.7b &&
+        echo '✅ Qwen 1.7B Ready!' &&
+        wait
+      "  
+networks:
+  app-network:
+    external: true
+
+volumes:
+  ollama_data:

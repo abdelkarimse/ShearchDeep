@@ -14,7 +14,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - backend
+      - app-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:latest
@@ -33,11 +33,11 @@ services:
     depends_on:
       - postgres
     networks:
-      - backend
+      - app-network
 
 volumes:
   postgres-data:
 
 networks:
-  backend:
-    driver: bridge
+  app-network:
+    external: true

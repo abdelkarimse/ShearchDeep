@@ -108,3 +108,225 @@ Run full stack with: `docker-compose up` (from root or `backend/` directory)
 - **Port Usage**: Backend :8082, Frontend :3000, Keycloak :8080, PostgreSQL :5432, Ollama :11434
 - **Environment Variables**: Database credentials, Ollama base-url, JWT issuer-uri set in `application.yml`; override via env vars with `${VAR_NAME:default}` syntax
 - **Testing**: Backend tests in `backend/src/test/`; frontend uses ESLint (no Jest config yet)
+
+
+# ShearchDeep - Docker Startup Scripts
+
+This directory contains multiple startup scripts to run all Docker services on the same network for inter-service communication.
+
+## Available Startup Scripts
+
+### 1. **start-all.bat** (Windows Batch)
+For Windows Command Prompt users.
+
+**Usage:**
+```cmd
+start-all.bat
+```
+
+Or double-click the file in Windows Explorer.
+
+---
+
+### 2. **start-all.ps1** (PowerShell)
+For Windows PowerShell users with colored output and better formatting.
+
+**Usage:**
+```powershell
+.\start-all.ps1
+```
+
+If you get an execution policy error, run:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+Then run:
+```powershell
+.\start-all.ps1
+```
+
+---
+
+### 3. **start-all.sh** (Bash/Shell)
+For Linux and macOS users.
+
+**Usage:**
+
+First, make the script executable:
+```bash
+chmod +x start-all.sh
+```
+
+Then run it:
+```bash
+./start-all.sh
+```
+
+---
+
+## Services Started
+
+All scripts start the following services on the **app-network**:
+
+| Service | Port | Type | Description |
+|---------|------|------|-------------|
+| **Keycloak** | 8080 | Auth Server | Identity and Access Management |
+| **Backend** | 8082 | Spring App | REST API |
+| **Ollama** | 11434 | LLM | Language Model Service |
+| **Mayan** | 80 | Document Management | Document OCR and Management |
+
+---
+
+## Database Connections
+
+| Database | Port | User | Password |
+|----------|------|------|----------|
+| Keycloak PostgreSQL | 5432 | kc | kc_password |
+| Backend PostgreSQL | 5433 | admin | 123456 |
+| Mayan PostgreSQL | Internal | mayan | mayandbpass |
+
+---
+
+## Network Architecture
+
+All services communicate through the **app-network** Docker bridge network, allowing:
+
+- **Keycloak** ↔ **Backend** (Authentication)
+- **Backend** ↔ **Ollama** (LLM Integration)
+- **Backend** ↔ **Mayan** (Document Management)
+- All services can resolve each other by container name
+
+---
+
+## Quick Start
+
+### Windows (Choose one):
+```cmd
+start-all.bat
+```
+
+### PowerShell:
+```powershell
+.\start-all.ps1
+```
+
+### Linux/macOS:
+```bash
+./start-all.sh
+```
+
+---
+
+## Stopping All Services
+
+### Windows:
+```cmd
+docker compose -f Keyclock/docker-compose.yaml down
+docker compose -f backend/docker-compose.yml down
+docker compose -f ollama/docker-compose.yml down
+docker compose -f mayan/docker-compose.yml -p mayan down
+```
+
+### Linux/macOS:
+```bash
+docker compose -f Keyclock/docker-compose.yaml down
+docker compose -f backend/docker-compose.yml down
+docker compose -f ollama/docker-compose.yml down
+docker compose -f mayan/docker-compose.yml -p mayan down
+```
+
+---
+
+## Viewing Logs
+
+### Keycloak:
+```bash
+docker logs keycloak -f
+```
+
+### Backend:
+```bash
+docker logs spring-app -f
+```
+
+### Ollama:
+```bash
+docker logs ollama -f
+```
+
+### Mayan:
+```bash
+docker logs mayan-app-1 -f
+```
+
+---
+
+## Troubleshooting
+
+### Port Already in Use
+If you get a "port already in use" error, check what's running:
+```bash
+docker ps -a
+```
+
+Stop specific containers:
+```bash
+docker stop <container_name>
+docker rm <container_name>
+```
+
+### Network Issues
+Verify containers are on app-network:
+```bash
+docker network inspect app-network
+```
+
+### Service Not Responding
+Check service health:
+```bash
+docker ps --filter "status=running"
+```
+
+Check logs:
+```bash
+docker logs <container_name>
+```
+
+---
+
+## Notes
+
+- All services use the same **app-network** for communication
+- PostgreSQL databases are accessible from host machine
+- Mayan, Ollama, and Keycloak services are automatically connected to app-network
+- Services are set to restart unless stopped
+- Volumes are preserved between restarts
+
+---
+
+## Docker Commands Reference
+
+```bash
+# View all running containers
+docker ps
+
+# View container logs
+docker logs <container_name> -f
+
+# Stop all services
+docker compose down
+
+# Remove volumes (clean start)
+docker compose down -v
+
+# Inspect network
+docker network inspect app-network
+
+# Check resource usage
+docker stats
+```
+
+---
+
+Created: December 6, 2025

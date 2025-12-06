@@ -21,25 +21,14 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8080/auth/realms/master
-          jwk-set-uri: http://localhost:8080/auth/realms/master/protocol/openid-connect/certs
   ai:
     ollama:
-      base-url: http://localhost:11434
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
       chat:
         options:
-          model: qwen3:1.7b
-    mcp:
-      client:
-        enabled: true
-        name: StudyPlusAdminAIClient
-        version: 1.0.0
-        type: sync
-        streamable-http:
-          connections:
-            StudyPlusAdminAIClient:
-              url: http://localhost:8081
+          model: ${SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL:qwen3:1.7b}
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/DeepShearch}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/DeepShearch}
     username: ${SPRING_DATASOURCE_USERNAME:admin}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
   jpa:
@@ -65,3 +54,11 @@ logging:
 host:
   mayan:
     url: ${HOST_MAYAN_URL:http://127.0.0.1:80}
+    username: ${HOST_MAYAN_USERNAME:admin}
+    password : ${HOST_MAYAN_PASSWORD:RC6LhKSYrm}
+  keycloak:
+    realm: ${KEYCLOAK_REALM:MyRealmDeepSearch}
+    auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8080/auth}
+    resource: ${KEYCLOAK_RESOURCE:backend-DeepSearch-service}
+    credentials:
+      secret: ${KEYCLOAK_SECRET:789c4e5f-1234-5678-9abc-def012345678}

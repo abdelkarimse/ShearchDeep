@@ -19,8 +19,7 @@ public class MayanDocumentUploadRequest {
     
     @JsonProperty("document_type_id")
     private Integer documentTypeId;
-    
-    private String language;
+
     
     // The actual file to upload
     private MultipartFile file;

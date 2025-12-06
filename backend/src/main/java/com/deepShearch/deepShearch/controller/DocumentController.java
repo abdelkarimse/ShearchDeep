@@ -52,36 +52,6 @@ public class DocumentController {
     }
 
     /**
-     * Upload a new document with file to Mayan EDMS
-     *
-     * @param label          Label for the document (optional)
-     * @param description    Description of the document (optional)
-     * @param documentTypeId Required document type ID
-     * @param language       Language code (optional)
-     * @param file           The file to upload (required)
-     * @return Mono of created document
-     */
-    @PostMapping(value = "/mayan/upload", consumes = "multipart/form-data")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public Mono<MayanDocumentResponse> uploadMayanDocument(
-            @RequestParam(required = false) String label,
-            @RequestParam(required = false) String description,
-            @RequestParam("document_type_id") Integer documentTypeId,
-            @RequestParam(required = false) String language,
-            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
-
-        MayanDocumentUploadRequest request = MayanDocumentUploadRequest.builder()
-                .label(label)
-                .description(description)
-                .documentTypeId(documentTypeId)
-                .language(language)
-                .file(file)
-                .build();
-
-        return mayanService.uploadDocument(request);
-    }
-
-    /**
      * Delete a document (move to trash) from Mayan EDMS
      *
      * @param documentId The ID of the document to delete
@@ -95,20 +65,18 @@ public class DocumentController {
 
 
 
-    @PostMapping(value = "/mayan/uplodes", consumes = "multipart/form-data")
+    @PostMapping(value = "/mayan/upload", consumes = "multipart/form-data")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public Mono<MayanDocumentResponse> testUpload(
             @RequestParam(required = false) String label,
             @RequestParam(required = false) String description,
             @RequestParam("document_type_id") Integer documentTypeId,
-            @RequestParam(required = false) String language,
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
 
         MayanDocumentUploadRequest request = MayanDocumentUploadRequest.builder()
                 .label(label)
                 .description(description)
                 .documentTypeId(documentTypeId)
-                .language(language)
                 .file(file)
                 .build();
 

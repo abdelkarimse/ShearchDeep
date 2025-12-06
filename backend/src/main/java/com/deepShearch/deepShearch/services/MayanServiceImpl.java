@@ -34,11 +34,15 @@ public class MayanServiceImpl implements MayanService {
     private final RestTemplate restTemplate;
     private final String mayanUrl;
     
-    private static final String USERNAME = "admin";
-    private static final String PASSWORD = "UpAyGCbqKd";
+    private  final String USERNAME;
+    private  final String PASSWORD ;
 
-    public MayanServiceImpl(@Value("${host.mayan.url}") String mayanUrl) {
+    public MayanServiceImpl(@Value("${host.mayan.url}") String mayanUrl,
+                            @Value("${host.mayan.username}") String username,
+                            @Value("${host.mayan.password}") String password) {
         this.mayanUrl = mayanUrl;
+        this.USERNAME = username;
+        this.PASSWORD = password;
         
         // Configure HttpClient with proper settings for file uploads
         HttpClient httpClient = HttpClient.create()
@@ -134,12 +138,7 @@ public class MayanServiceImpl implements MayanService {
                 .append("Content-Disposition: form-data; name=\"document_type_id\"\r\n\r\n")
                 .append(request.getDocumentTypeId()).append("\r\n");
             
-            if (request.getLanguage() != null && !request.getLanguage().isEmpty()) {
-                body.append("--").append(boundary).append("\r\n")
-                    .append("Content-Disposition: form-data; name=\"language\"\r\n\r\n")
-                    .append(request.getLanguage()).append("\r\n");
-            }
-            
+
             body.append("--").append(boundary).append("\r\n")
                 .append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(originalFilename).append("\"\r\n")
                 .append("Content-Type: application/octet-stream\r\n\r\n");

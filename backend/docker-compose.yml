@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: 123456
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -34,7 +34,15 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - HOST_MAYAN_URL=http://mayan:8000
+      - HOST_MAYAN_URL=http://mayan-app-1:8000
+      - HOST_MAYAN_USERNAME=admin
+      - HOST_MAYAN_PASSWORD=RC6LhKSYrm
+      - KEYCLOAK_REALM=MyRealmDeepSearch
+      - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080/auth
+      - KEYCLOAK_RESOURCE=backend-DeepSearch-service
+      - KEYCLOAK_SECRET=789c4e5f-1234-5678-9abc-def012345678
+      - SPRING_AI_OLLAMA_BASE_URL=http://ollama:11434
+      - SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL=qwen3:1.7b
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,5 +56,5 @@ volumes:
 
 networks:
   app-network:
-    driver: bridge
+    external: true
   

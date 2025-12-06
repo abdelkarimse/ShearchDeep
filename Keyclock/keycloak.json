@@ -5,6 +5,7 @@
   "clients": [
     {
       "clientId": "my-DeepSearch-app",
+      "secret": "ZiMZ60sYVQ9ZHguzgqOdMwDkmtoTOg9I",
       "protocol": "openid-connect",
       "publicClient": true,
       "standardFlowEnabled": true,
@@ -26,6 +27,8 @@
       "protocol": "openid-connect",
       "publicClient": false,
       "standardFlowEnabled": true,
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
       "secret": "789c4e5f-1234-5678-9abc-def012345678",
       "redirectUris": [
         "http://localhost:8082/*"
