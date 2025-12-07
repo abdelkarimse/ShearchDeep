@@ -9,11 +9,11 @@ echo =========================================
 echo.
 
 REM Create shared network if it doesn't exist
-docker network create app-network >nul 2>&1
+REM  docker network create app-network >nul 2>&1
 
-echo [1/5] Starting Keycloak (Auth Server on port 8080)...
-docker compose -f Keyclock/docker-compose.yaml up -d
-timeout /t 2 /nobreak
+REM  echo [1/5] Starting Keycloak (Auth Server on port 8080)...
+REM  docker compose -f Keyclock/docker-compose.yaml up -d
+REM  timeout /t 2 /nobreak
 
 echo.
 echo [2/5] Starting Backend (Spring App on port 8082, PostgreSQL on port 5433)...

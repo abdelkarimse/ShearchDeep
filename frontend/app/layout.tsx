@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import CursorManager from "./components/CusorManager";
 import AuthProvider from "./providers";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
+import { BubbleBackground } from "@/components/animate-ui/components/backgrounds/bubble";
+import AuthVerifier from "./Auth/AuthVerifier";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,22 +23,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <BubbleBackground
+          transition={{ stiffness: 100, damping: 20 }}
+          interactive={true}
+          className="h-screen w-screen -z-10 fixed"
+        />
         <AuthProvider>
-          <Navbar />
-          <div className="flex">
-            <Sidebar />
-            <main className="flex-1 p-6">
-              {children}
-            </main>
-          </div>
+          <CursorManager />
+          <AuthVerifier>{children}</AuthVerifier>
         </AuthProvider>
       </body>
     </html>
