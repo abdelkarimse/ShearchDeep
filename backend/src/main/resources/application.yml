@@ -6,12 +6,6 @@ spring:
     name: deepShearch
   main:
     allow-bean-definition-overriding: true
-  web:
-    cors:
-      allowed-origins: "*"
-      allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
-      allowed-headers: "*"
-      max-age: 3600
 
   security:
     user:
@@ -20,7 +14,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/auth/realms/master
+          issuer-uri: http://localhost:8080/realms/MyRealmDeepSearch
   ai:
     ollama:
       base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
@@ -58,7 +52,9 @@ host:
     password : ${HOST_MAYAN_PASSWORD:RC6LhKSYrm}
   keycloak:
     realm: ${KEYCLOAK_REALM:MyRealmDeepSearch}
-    auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8080/auth}
-    resource: ${KEYCLOAK_RESOURCE:backend-DeepSearch-service}
+    auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8080}
+    resource: ${KEYCLOAK_RESOURCE:backend-deep-search-service}
     credentials:
-      secret: ${KEYCLOAK_SECRET:789c4e5f-1234-5678-9abc-def012345678}
+    secret: ${KEYCLOAK_SECRET:789c4e5f-1234-5678-9abc-def012345678}
+    name: ${KEYCLOAK_USERNAME:admin}
+    password: ${KEYCLOAK_PASSWORD:admin_password}

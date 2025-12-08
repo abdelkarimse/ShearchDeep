@@ -6,19 +6,32 @@ import {
   deleteUser,
   getAllUsers,
   createUser,
+  setTokenHeader,
 } from "@/app/dashboard/apiService";
-import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import type { Session } from "next-auth";
+import { useEffect, useState } from "react";
 export default function DashboardLayout() {
   const { setMouseColor } = useStore();
+  const { data: session } = useSession() as { data: Session | null };
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    getAllUsers()
-      .then((e) => {
-        console.log("users");
-      })
-      .catch((e) => {
-        console.error("error users", e);
-      });
-  }, []);
+    if (session?.accessToken) {
+      setTokenHeader(session.accessToken);
+      setLoading(true);
+      getAllUsers()
+        .then((e) => {
+          console.log("users", e.data);
+          setUsers(e.data);
+        })
+        .catch((e) => {
+          console.error("error users", e);
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [session]);
 
   return (
     <div className="h-screen w-full flex justify-center items-center">
@@ -97,52 +110,11 @@ export default function DashboardLayout() {
                       </tr>
                     </thead>
                     <tbody className="bg-white">
-                      {[
-                        {
-                          id: "usr_001",
-                          username: "johndoe",
-                          firstName: "John",
-                          lastName: "Doe",
-                          email: "john@example.com",
-                          emailVerified: true,
-                        },
-                        {
-                          id: "usr_002",
-                          username: "janesmith",
-                          firstName: "Jane",
-                          lastName: "Smith",
-                          email: "jane@example.com",
-                          emailVerified: true,
-                        },
-                        {
-                          id: "usr_003",
-                          username: "mikej",
-                          firstName: "Mike",
-                          lastName: "Johnson",
-                          email: "mike@example.com",
-                          emailVerified: false,
-                        },
-                        {
-                          id: "usr_004",
-                          username: "sarahw",
-                          firstName: "Sarah",
-                          lastName: "Williams",
-                          email: "sarah@example.com",
-                          emailVerified: true,
-                        },
-                        {
-                          id: "usr_005",
-                          username: "davidb",
-                          firstName: "David",
-                          lastName: "Brown",
-                          email: "david@example.com",
-                          emailVerified: true,
-                        },
-                      ].map((user, index, array) => (
+                      {users.map((user, index) => (
                         <tr
                           key={user.id}
                           className={`hover:bg-gray-50 transition-colors ${
-                            index !== array.length - 1
+                            index !== users.length - 1
                               ? "border-b border-gray-200"
                               : ""
                           }`}

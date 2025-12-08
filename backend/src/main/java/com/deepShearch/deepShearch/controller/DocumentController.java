@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/V1/documents")
+    @RequestMapping("/api/v1/documents")
 public class DocumentController {
     private Llmservice llmservice;
     private MayanService mayanService;

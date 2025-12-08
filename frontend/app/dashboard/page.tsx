@@ -8,9 +8,7 @@ export default function Dashboardrooting() {
     return null;
   }
   if (
-    session.realm_roles.includes("admin") ||
-    session.realm_roles.includes("Admin")
-  ) {
+    session.realm_roles.includes("ADMIN")) {
     router.replace("/dashboard/Admin");
   } else {
     router.replace("/dashboard/User");

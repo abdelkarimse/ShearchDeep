@@ -21,6 +21,12 @@ public class KeycloakAdminClientConfig {
     @Value("${host.keycloak.credentials.secret:789c4e5f-1234-5678-9abc-def012345678}")
     private String clientSecret;
 
+    @Value("${host.keycloak.name:admin}")
+    private String username;
+
+    @Value("${host.keycloak.password:admin_password}")
+    private String password;
+
     @Bean
     public Keycloak keycloakAdminClient() {
         return KeycloakBuilder.builder()
@@ -29,6 +35,9 @@ public class KeycloakAdminClientConfig {
                 .clientId(clientId)
                 .clientSecret(clientSecret)
                 .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
+                .username(username)
+                .password(password)
+                
                 .build();
     }
 }

@@ -27,14 +27,13 @@ import lombok.AllArgsConstructor;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/V1/users")
+@RequestMapping("/api/v1/users")
 @PreAuthorize("hasRole('ROLE_ADMIN')")
 public class UserController {
     private UserService userService;
     private SimpMessagingTemplate messagingTemplate;
 
     @GetMapping
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<UserRepresentation>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }

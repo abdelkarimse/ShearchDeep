@@ -1,16 +1,44 @@
 import axios, { AxiosResponse } from "axios";
 
-const API_BASE_URL = "http://localhost:8082/api/V1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082/api/v1";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
+
+// Add request interceptor to log requests
+apiClient.interceptors.request.use((config) => {
+  console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
+    headers: config.headers,
+  });
+  return config;
+}, (error) => {
+  console.error("[API Request Error]", error);
+  return Promise.reject(error);
+});
+
+// Add response interceptor to log responses
+apiClient.interceptors.response.use((response) => {
+  console.log(`[API Response] ${response.status} ${response.config.url}`, response.data);
+  return response;
+}, (error) => {
+  console.error("[API Response Error]", {
+    message: error.message,
+    status: error.response?.status,
+    statusText: error.response?.statusText,
+    data: error.response?.data,
+    url: error.config?.url,
+    code: error.code,
+    fullError: error.toString(),
+  });
+  return Promise.reject(error);
+});
+
 export function setTokenHeader(token: string) {
+  console.log("Setting token header");
   apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
+
 export interface UserRepresentation {
   id: string;
   username: string;
@@ -39,6 +67,13 @@ export interface MayanDocument {
     id: number;
     label: string;
   };
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }
 
 export interface DocumentUploadParams {
@@ -124,7 +159,7 @@ export const summarizeDocumentPage = (
 
 export const getMayanDocuments = (
   queryParams?: GetDocumentsQueryParams
-): Promise<AxiosResponse<MayanDocument[]>> => {
+): Promise<AxiosResponse<PaginatedResponse<MayanDocument>>> => {
   const url = `/documents/mayan`;
   return apiClient.get(url, { params: queryParams });
 };
