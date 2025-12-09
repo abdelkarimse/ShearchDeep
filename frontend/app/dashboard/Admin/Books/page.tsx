@@ -2,18 +2,23 @@
 import Navbar from "../components/Navbar";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/app/Zustand/Store";
-import { deleteMayanDocument, getMayanDocuments, MayanDocument, setTokenHeader } from "@/app/dashboard/apiService";
+import {
+  deleteMayanDocument,
+  getMayanDocuments,
+  MayanDocument,
+  setTokenHeader,
+} from "@/app/dashboard/apiService";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import { useEffect, useState } from "react";
-
+import Upload from "./upload/Upload";
 export default function DashboardLayout() {
   const router = useRouter();
   const { setMouseColor } = useStore();
   const { data: session } = useSession() as { data: Session | null };
   const [documents, setDocuments] = useState<MayanDocument[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
-
+  const [action, setaction] = useState(false);
   useEffect(() => {
     if (session?.accessToken) {
       setTokenHeader(session.accessToken);
@@ -25,8 +30,8 @@ export default function DashboardLayout() {
           console.error("error fetching documents", error);
         });
     }
-  }, [session]);
-
+  }, [session, action]);
+  const [isopen, setopen] = useState(false);
   const filteredDocuments = documents.filter((doc) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -36,9 +41,9 @@ export default function DashboardLayout() {
     );
   });
   const handleDelete = (documentId: string) => {
-    deleteMayanDocument(  
-      documentId)
+    deleteMayanDocument(documentId)
       .then(() => {
+        setaction(!action);
         setDocuments((prevDocs) =>
           prevDocs.filter((doc) => doc.id.toString() !== documentId)
         );
@@ -46,10 +51,9 @@ export default function DashboardLayout() {
       .catch((error) => {
         console.error("Error deleting document", error);
       });
-      
-    // Implement delete functionality here
 
-  }
+    // Implement delete functionality here
+  };
 
   return (
     <div className="h-screen w-full flex justify-center items-center">
@@ -58,6 +62,7 @@ export default function DashboardLayout() {
         onMouseEnter={() => setMouseColor("black")}
         onMouseLeave={() => setMouseColor("white")} // optional reset
       >
+        <Upload isOpen={isopen} onClose={() => setopen(false)}></Upload>
         <div
           data-slot="card"
           className={
@@ -96,11 +101,13 @@ export default function DashboardLayout() {
                         />
                       </svg>
                     </div>
-                     <button className="px-5 py-2.5 bg-black text-white font-medium rounded-md hover:bg-gray-900 transition-all">
+                    <button
+                      onClick={() => setopen(true)}
+                      className="px-5 py-2.5 bg-black text-white font-medium rounded-md hover:bg-gray-900 transition-all"
+                    >
                       + Add Book
                     </button>
                   </div>
-                  
                 </div>
 
                 {/* Documents Table */}
@@ -108,13 +115,27 @@ export default function DashboardLayout() {
                   <table className="w-full">
                     <thead className="bg-white text-black">
                       <tr>
-                        <th className="text-left py-4 px-6 font-semibold">ID</th>
-                        <th className="text-left py-4 px-6 font-semibold">Label</th>
-                        <th className="text-left py-4 px-6 font-semibold">Description</th>
-                        <th className="text-left py-4 px-6 font-semibold">Type</th>
-                        <th className="text-left py-4 px-6 font-semibold">Language</th>
-                        <th className="text-left py-4 px-6 font-semibold">Created</th>
-                        <th className="text-right py-4 px-6 font-semibold">Actions</th>
+                        <th className="text-left py-4 px-6 font-semibold">
+                          ID
+                        </th>
+                        <th className="text-left py-4 px-6 font-semibold">
+                          Label
+                        </th>
+                        <th className="text-left py-4 px-6 font-semibold">
+                          Description
+                        </th>
+                        <th className="text-left py-4 px-6 font-semibold">
+                          Type
+                        </th>
+                        <th className="text-left py-4 px-6 font-semibold">
+                          Language
+                        </th>
+                        <th className="text-left py-4 px-6 font-semibold">
+                          Created
+                        </th>
+                        <th className="text-right py-4 px-6 font-semibold">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white">
@@ -131,37 +152,53 @@ export default function DashboardLayout() {
                             <td className="py-4 px-6 text-gray-600 font-mono text-xs">
                               {doc.id}
                             </td>
-                            <td className="py-4 px-6 font-semibold">{doc.label}</td>
+                            <td className="py-4 px-6 font-semibold">
+                              {doc.label}
+                            </td>
                             <td className="py-4 px-6 text-gray-600 text-sm max-w-xs truncate">
                               {doc.description}
                             </td>
-                            <td className="py-4 px-6">{doc.document_type.label}</td>
+                            <td className="py-4 px-6">
+                              {doc.document_type.label}
+                            </td>
                             <td className="py-4 px-6">{doc.language}</td>
                             <td className="py-4 px-6 text-sm text-gray-600">
-                              {new Date(doc.datetime_created).toLocaleDateString()}
+                              {new Date(
+                                doc.datetime_created
+                              ).toLocaleDateString()}
                             </td>
                             <td className="py-4 px-6">
                               <div className="flex items-center justify-end gap-2">
-                                <button 
-                                  onClick={() => router.push(`/dashboard/Admin/Books/view/${doc.id}`)}
+                                <button
+                                  onClick={() =>
+                                    router.push(
+                                      `/dashboard/Admin/Books/view/${doc.id}`
+                                    )
+                                  }
                                   className="px-4 py-1.5 bg-white text-black font-medium rounded border-2 border-black hover:bg-black hover:text-white transition-all text-sm"
                                 >
                                   View
-                                </button> 
-                              <button 
-                                onClick={() => handleDelete(doc.id)}
-                                className="px-4 py-1.5 bg-red-600 text-white font-medium rounded border-2 hover:bg-red-700 transition-all duration-200 text-sm"
-                              >
-                                Delete
-                              </button>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleDelete(doc.id);
+                                  }}
+                                  className="px-4 py-1.5 bg-red-600 text-white font-medium rounded border-2 hover:bg-red-700 transition-all duration-200 text-sm"
+                                >
+                                  Delete
+                                </button>
                               </div>
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={7} className="py-8 px-6 text-center text-gray-500">
-                            No documents found matching &quot;{searchQuery}&quot;
+                          <td
+                            colSpan={7}
+                            className="py-8 px-6 text-center text-gray-500"
+                          >
+                            No documents found matching &quot;{searchQuery}
+                            &quot;
                           </td>
                         </tr>
                       )}
