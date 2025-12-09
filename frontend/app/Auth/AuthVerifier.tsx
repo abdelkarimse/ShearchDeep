@@ -32,17 +32,14 @@ export default function AuthVerifier({
     }
     if (
       pathname.indexOf("/dashboard/Admin") != -1 &&
-      !(
-        session.realm_roles.includes("ADMIN") 
-      )
+      !session.realm_roles.includes("ADMIN")
     ) {
       return router.replace("/dashboard");
-
     }
     if (
       pathname.indexOf("/dashboard/User") != -1 &&
-      !(session.realm_roles.includes("USER") 
-    )) {
+      !session.realm_roles.includes("ADMIN")
+    ) {
       return router.replace("/dashboard");
     }
     return <>{children}</>;
