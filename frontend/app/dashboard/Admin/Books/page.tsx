@@ -1,23 +1,24 @@
 "use client";
 import Navbar from "../components/Navbar";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/app/Zustand/Store";
-import { getMayanDocuments, MayanDocument, setTokenHeader } from "@/app/dashboard/apiService";
+import { deleteMayanDocument, getMayanDocuments, MayanDocument, setTokenHeader } from "@/app/dashboard/apiService";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import { useEffect, useState } from "react";
 
 export default function DashboardLayout() {
+  const router = useRouter();
   const { setMouseColor } = useStore();
   const { data: session } = useSession() as { data: Session | null };
   const [documents, setDocuments] = useState<MayanDocument[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     if (session?.accessToken) {
       setTokenHeader(session.accessToken);
       getMayanDocuments()
         .then((response) => {
-          console.log("documents", response.data);
-          // Extract results array from paginated response
           setDocuments(response.data.results || []);
         })
         .catch((error) => {
@@ -25,6 +26,30 @@ export default function DashboardLayout() {
         });
     }
   }, [session]);
+
+  const filteredDocuments = documents.filter((doc) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      doc.label.toLowerCase().includes(query) ||
+      doc.description.toLowerCase().includes(query) ||
+      doc.id.toString().includes(query)
+    );
+  });
+  const handleDelete = (documentId: string) => {
+    deleteMayanDocument(  
+      documentId)
+      .then(() => {
+        setDocuments((prevDocs) =>
+          prevDocs.filter((doc) => doc.id.toString() !== documentId)
+        );
+      })
+      .catch((error) => {
+        console.error("Error deleting document", error);
+      });
+      
+    // Implement delete functionality here
+
+  }
 
   return (
     <div className="h-screen w-full flex justify-center items-center">
@@ -53,6 +78,8 @@ export default function DashboardLayout() {
                       <input
                         type="text"
                         placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10 pr-4 py-2.5 border-2 rounded-md focus:outline-none focus:ring-0 w-64"
                       />
                       <svg
@@ -69,7 +96,11 @@ export default function DashboardLayout() {
                         />
                       </svg>
                     </div>
+                     <button className="px-5 py-2.5 bg-black text-white font-medium rounded-md hover:bg-gray-900 transition-all">
+                      + Add Book
+                    </button>
                   </div>
+                  
                 </div>
 
                 {/* Documents Table */}
@@ -87,36 +118,53 @@ export default function DashboardLayout() {
                       </tr>
                     </thead>
                     <tbody className="bg-white">
-                      {documents.map((doc, index) => (
-                        <tr
-                          key={doc.id}
-                          className={`hover:bg-gray-50 transition-colors ${
-                            index !== documents.length - 1
-                              ? "border-b border-gray-200"
-                              : ""
-                          }`}
-                        >
-                          <td className="py-4 px-6 text-gray-600 font-mono text-xs">
-                            {doc.id}
-                          </td>
-                          <td className="py-4 px-6 font-semibold">{doc.label}</td>
-                          <td className="py-4 px-6 text-gray-600 text-sm max-w-xs truncate">
-                            {doc.description}
-                          </td>
-                          <td className="py-4 px-6">{doc.document_type.label}</td>
-                          <td className="py-4 px-6">{doc.language}</td>
-                          <td className="py-4 px-6 text-sm text-gray-600">
-                            {new Date(doc.datetime_created).toLocaleDateString()}
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center justify-end gap-2">
-                              <button className="px-4 py-1.5 bg-white text-black font-medium rounded border-2 border-black hover:bg-black hover:text-white transition-all text-sm">
-                                View
+                      {filteredDocuments.length > 0 ? (
+                        filteredDocuments.map((doc, index) => (
+                          <tr
+                            key={doc.id}
+                            className={`hover:bg-gray-50 transition-colors ${
+                              index !== filteredDocuments.length - 1
+                                ? "border-b border-gray-200"
+                                : ""
+                            }`}
+                          >
+                            <td className="py-4 px-6 text-gray-600 font-mono text-xs">
+                              {doc.id}
+                            </td>
+                            <td className="py-4 px-6 font-semibold">{doc.label}</td>
+                            <td className="py-4 px-6 text-gray-600 text-sm max-w-xs truncate">
+                              {doc.description}
+                            </td>
+                            <td className="py-4 px-6">{doc.document_type.label}</td>
+                            <td className="py-4 px-6">{doc.language}</td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              {new Date(doc.datetime_created).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-6">
+                              <div className="flex items-center justify-end gap-2">
+                                <button 
+                                  onClick={() => router.push(`/dashboard/Admin/Books/view/${doc.id}`)}
+                                  className="px-4 py-1.5 bg-white text-black font-medium rounded border-2 border-black hover:bg-black hover:text-white transition-all text-sm"
+                                >
+                                  View
+                                </button> 
+                              <button 
+                                onClick={() => handleDelete(doc.id)}
+                                className="px-4 py-1.5 bg-red-600 text-white font-medium rounded border-2 hover:bg-red-700 transition-all duration-200 text-sm"
+                              >
+                                Delete
                               </button>
-                            </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-8 px-6 text-center text-gray-500">
+                            No documents found matching &quot;{searchQuery}&quot;
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>

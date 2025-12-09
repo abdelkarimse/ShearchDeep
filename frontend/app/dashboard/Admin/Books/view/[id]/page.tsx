@@ -1,6 +1,6 @@
 "use client";
 import { useStore } from "@/app/Zustand/Store";
-import Tx from "./components/TX";
+import DocumentViewPage from "./view";
 export default function Page() {
   const { setMouseColor } = useStore();
 
@@ -19,7 +19,9 @@ export default function Page() {
           style={{ height: "100%" }}
         >
           <div style={{ height: "100%" }}>
-            <Tx />
+        
+          <DocumentViewPage />
+            
           </div>
         </div>
       </div>

@@ -164,6 +164,13 @@ export const getMayanDocuments = (
   return apiClient.get(url, { params: queryParams });
 };
 
+export const getMayanDocumentById = (
+  documentId: string
+): Promise<AxiosResponse<MayanDocument>> => {
+  const url = `/documents/mayan/${documentId}`;
+  return apiClient.get(url);
+};
+
 export const deleteMayanDocument = (
   documentId: string
 ): Promise<AxiosResponse> => {
