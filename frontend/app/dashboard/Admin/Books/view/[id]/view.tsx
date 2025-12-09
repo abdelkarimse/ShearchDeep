@@ -16,15 +16,16 @@ import {
   getMayanDocumentById,
   setTokenHeader,
   MayanDocument,
+  getPageById,
 } from "@/app/dashboard/apiService";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
 import PopupReader, { Reader } from "./popup-reader";
+import { url } from "inspector/promises";
 
 interface Page {
   id: number;
-  content: string;
-  image: string;
+  image_url: string;
 }
 
 export default function DocumentViewPage() {
@@ -36,11 +37,11 @@ export default function DocumentViewPage() {
   const [zoom, setZoom] = useState(1);
   const [document, setDocument] = useState<MayanDocument | null>(null);
   const [pages, setPages] = useState<Page[]>([]);
+  const [pageImageUrls, setPageImageUrls] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [isReaderPopupOpen, setIsReaderPopupOpen] = useState(false);
   const bookRef = useRef<any>(null);
 
-  // Sample readers data - TODO: Fetch from API
   const [readers, setReaders] = useState<Reader[]>([
     {
       id: "1",
@@ -69,54 +70,86 @@ export default function DocumentViewPage() {
   ]);
   const hasReaders = readers.length > 0;
 
+  const extractFromUrl = (url: string) => {
+    const parts = url.split("/").filter(Boolean);
+
+    const documentId = parts[parts.indexOf("documents") + 1];
+    const fileId = parts[parts.indexOf("files") + 1];
+    const pageId = parts[parts.indexOf("pages") + 1];
+
+    return { documentId, fileId, pageId };
+  };
+
   useEffect(() => {
     if (session?.accessToken && documentId) {
       setTokenHeader(session.accessToken);
       // Fetch document data from API
       getMayanDocumentById(documentId)
         .then((response) => {
+          console.log("Fetched document:", response.data);
           setDocument(response.data);
-          // TODO: Fetch actual pages from Mayan EDMS API
-          // For now, use placeholder pages
-          const documentPages: Page[] = [
-            {
-              id: 1,
-              content: `Document: ${response.data.label}`,
-              image: "https://via.placeholder.com/600x800?text=Page+1",
-            },
-            {
-              id: 2,
-              content: "Page 2: Document Content",
-              image: "https://via.placeholder.com/600x800?text=Page+2",
-            },
-            {
-              id: 3,
-              content: "Page 3: Additional Content",
-              image: "https://via.placeholder.com/600x800?text=Page+3",
-            },
-          ];
+          // Map API response to Page interface
+          const documentPages: Page[] = response.data.results.map(
+            (page: any) => ({
+              id: page.id,
+              image_url: page.image_url,
+            })
+          );
+          console.log("Mapped pages:", documentPages);
           setPages(documentPages);
           setLoading(false);
         })
         .catch((error) => {
           console.error("Error fetching document:", error);
-          // Fallback to sample pages
           setPages([
             {
               id: 1,
-              content: `Document ID: ${documentId}`,
-              image: "https://via.placeholder.com/600x800?text=Page+1",
+              image_url: "https://via.placeholder.com/600x800?text=Page+1",
             },
             {
               id: 2,
-              content: "Page 2: Content",
-              image: "https://via.placeholder.com/600x800?text=Page+2",
+              image_url: "https://via.placeholder.com/600x800?text=Page+2",
             },
           ]);
           setLoading(false);
         });
     }
   }, [session, documentId]);
+
+  // Fetch blob images and convert to object URLs
+  useEffect(() => {
+    if (!pages.length || !session?.accessToken) return;
+
+    const fetchImages = async () => {
+      const imageUrlMap: Record<number, string> = {};
+
+      for (const page of pages) {
+        try {
+          const { documentId, fileId, pageId } = extractFromUrl(page.image_url);
+          const response = await getPageById(documentId, fileId, pageId);
+          
+          // Create object URL from blob
+          const blob = response.data;
+          const objectUrl = URL.createObjectURL(blob);
+          imageUrlMap[page.id] = objectUrl;
+        } catch (error) {
+          console.error(`Error fetching image for page ${page.id}:`, error);
+        }
+      }
+
+      setPageImageUrls(imageUrlMap);
+    };
+
+    fetchImages();
+
+    // Cleanup: revoke object URLs when component unmounts or pages change
+    return () => {
+      Object.values(pageImageUrls).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pages, session?.accessToken]);
 
   const handleNextPage = () => {
     if (bookRef.current) {
@@ -189,9 +222,6 @@ export default function DocumentViewPage() {
             >
               <ArrowLeft className="w-5 h-5 text-black" />
             </button>
-            <h1 className="text-2xl font-bold text-black">
-              {document?.label || "Document Viewer"}
-            </h1>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-black text-sm font-medium">
@@ -283,14 +313,16 @@ export default function DocumentViewPage() {
                 key={page.id}
                 className="w-full h-full bg-white flex flex-col items-center justify-center p-8 border border-gray-200"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={page.image}
-                  alt={`Page ${page.id}`}
-                  className="w-full h-full object-cover rounded"
-                  loading="lazy"
-                />
-                <p className="mt-4 text-gray-600 text-sm">{page.content}</p>
+                {pageImageUrls[page.id] ? (
+                  <img
+                    src={pageImageUrls[page.id]}
+                    alt={`Page ${page.id}`}
+                    className="w-full h-full object-cover rounded"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="text-gray-500">Loading...</div>
+                )}
               </div>
             ))}
           </HTMLFlipBook>
@@ -309,7 +341,6 @@ export default function DocumentViewPage() {
       <PopupReader
         isOpen={isReaderPopupOpen}
         onClose={() => setIsReaderPopupOpen(false)}
-        documentTitle={document?.label || "Document"}
         readers={readers}
         onBlockAccess={handleBlockAccess}
       />
