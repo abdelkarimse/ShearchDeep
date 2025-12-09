@@ -38,7 +38,7 @@ export default function AuthVerifier({
     }
     if (
       pathname.indexOf("/dashboard/User") != -1 &&
-      !session.realm_roles.includes("ADMIN")
+      session.realm_roles.includes("ADMIN")
     ) {
       return router.replace("/dashboard");
     }
