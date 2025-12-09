@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import com.deepShearch.deepShearch.Dto.DocumentFilesResponse;
 import com.deepShearch.deepShearch.Dto.MayanDocumentPageOCRResponse;
 import com.deepShearch.deepShearch.Dto.MayanDocumentResponse;
 import com.deepShearch.deepShearch.Dto.MayanDocumentUploadRequest;
@@ -45,12 +47,13 @@ public class MayanServiceImpl implements MayanService {
         this.PASSWORD = password;
         
         // Configure HttpClient with proper settings for file uploads
-        HttpClient httpClient = HttpClient.create()
+        HttpClient httpClient = HttpClient.create()     
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
                 .responseTimeout(Duration.ofMinutes(5))
                 .doOnConnected(conn -> conn
                         .addHandlerLast(new ReadTimeoutHandler(5, TimeUnit.MINUTES))
-                        .addHandlerLast(new WriteTimeoutHandler(5, TimeUnit.MINUTES)));
+                        .addHandlerLast(new WriteTimeoutHandler(5, TimeUnit.MINUTES)))
+                .followRedirect(true);
         
         // Create Basic Auth header
         String auth = USERNAME + ":" + PASSWORD;
@@ -93,7 +96,30 @@ public class MayanServiceImpl implements MayanService {
                         response != null ? response.getCount() : 0))
                 .doOnError(error -> log.error("Error fetching documents from Mayan EDMS", error));
     }
-    
+
+    @Override
+    public Mono<DocumentFilesResponse> getDocumentsById(String docId) {
+        log.info("Fetching document by ID from Mayan EDMS - documentId: {}", docId);
+        String fileId = docId;
+        return webClient.get()
+                .uri("/api/v4/documents/{docId}/files/{fileId}/pages", docId, fileId)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .onStatus(
+                        status -> !status.is2xxSuccessful(),
+                        response -> response.bodyToMono(String.class)
+                                .map(body -> {
+                                    log.error("Mayan API error for document {}: body={}", docId, body);
+                                    return new RuntimeException("Mayan API error: HTTP error response");
+                                })
+                )
+                .bodyToMono(DocumentFilesResponse.class)
+                .doOnSuccess(response -> log.info("Successfully fetched {} files for document: {}", 
+                        response != null && response.getResults() != null ? response.getResults().size() : 0, docId))
+                .doOnError(error -> log.error("Error fetching files list for document ID: {}", docId, error));
+    }
+
+
 
     @Override
     public Mono<MayanDocumentResponse> uploadDocument(MayanDocumentUploadRequest request) {
@@ -199,6 +225,23 @@ public class MayanServiceImpl implements MayanService {
                         documentId, documentVersionPageId))
                 .doOnError(error -> log.error("Error fetching OCR content from Mayan EDMS - documentId: {}, pageId: {}", 
                         documentId, documentVersionPageId, error));
+    }
+
+    @Override
+    public Mono<ResponseEntity<byte[]>> getDocumentsByIdwithPageId(String documentId, String fileId, String pageId) {
+        log.info("Fetching document image from Mayan EDMS - documentId: {}, fileId: {}, pageId: {}",
+                documentId, fileId, pageId);
+
+        return webClient.get()
+                .uri("/api/v4/documents/{documentId}/files/{fileId}/pages/{pageId}/image/",
+                        documentId, fileId, pageId)
+                .accept(MediaType.ALL)
+                .retrieve()
+                .toEntity(byte[].class)
+                .doOnSuccess(response -> log.info("Successfully fetched image for document ID: {}, page ID: {}",
+                        documentId, pageId))
+                .doOnError(error -> log.error("Error fetching image from Mayan EDMS - documentId: {}, pageId: {}",
+                        documentId, pageId, error));
     }
 
 }

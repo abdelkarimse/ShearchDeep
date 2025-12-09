@@ -47,7 +47,7 @@ logging:
 
 host:
   mayan:
-    url: ${HOST_MAYAN_URL:http://127.0.0.1:80}
+    url: ${HOST_MAYAN_URL:http://127.0.0.1}
     username: ${HOST_MAYAN_USERNAME:admin}
     password : ${HOST_MAYAN_PASSWORD:RC6LhKSYrm}
   keycloak:

@@ -27,14 +27,19 @@ services:
       KC_DB_PASSWORD: kc_password
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin_password
+      KC_HOSTNAME_STRICT: "false" 
+      KC_HTTP_ENABLED: "true" 
     ports:
       - "8080:8080"
-    command: start-dev
+    command:
+      - start-dev
+      - --import-realm
+    volumes:
+      - ./keycloak.json:/opt/keycloak/data/import/realm.json
     depends_on:
       - postgres
     networks:
       - app-network
-
 volumes:
   postgres-data:
 

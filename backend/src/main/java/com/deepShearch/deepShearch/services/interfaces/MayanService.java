@@ -1,5 +1,8 @@
 package com.deepShearch.deepShearch.services.interfaces;
 
+import org.springframework.http.ResponseEntity;
+
+import com.deepShearch.deepShearch.Dto.DocumentFilesResponse;
 import com.deepShearch.deepShearch.Dto.MayanDocumentPageOCRResponse;
 import com.deepShearch.deepShearch.Dto.MayanDocumentResponse;
 import com.deepShearch.deepShearch.Dto.MayanDocumentUploadRequest;
@@ -9,15 +12,12 @@ import reactor.core.publisher.Mono;
 
 public interface MayanService {
     
-    /**
-     * Get paginated list of documents from Mayan EDMS
-     * @param ordering Field to use when ordering the results
-     * @param page Page number within the paginated result set
-     * @param pageSize Number of results to return per page
-     * @return Mono of MayanDocumentsListResponse
-     */
+
     Mono<MayanDocumentsListResponse> getDocuments(String ordering, Integer page, Integer pageSize);
-    
+    Mono<DocumentFilesResponse> getDocumentsById(String docId);
+
+    Mono<ResponseEntity<byte[]>> getDocumentsByIdwithPageId(String documentId, String fileId, String pageId);
+
  
 
     Mono<MayanDocumentResponse> uploadDocument(MayanDocumentUploadRequest request);
