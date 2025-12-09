@@ -55,18 +55,19 @@ export interface UserCreatePayload {
   password: string;
 }
 
+export interface PageDocument {
+    document_file_id : number;
+    document_file_url : string;
+    id : number;
+    image_url : string;
+    page_number : number;
+    url : string;
+}
 export interface MayanDocument {
-  id: number;
-  uuid: string;
-  label: string;
-  description: string;
-  language: string;
-  url: string;
-  datetime_created: string;
-  document_type: {
-    id: number;
-    label: string;
-  };
+  count: number;
+  previosu: string | null;
+  next: string | null;
+  results: PageDocument[];
 }
 
 export interface PaginatedResponse<T> {
@@ -164,12 +165,28 @@ export const getMayanDocuments = (
   return apiClient.get(url, { params: queryParams });
 };
 
+
+
 export const getMayanDocumentById = (
   documentId: string
 ): Promise<AxiosResponse<MayanDocument>> => {
   const url = `/documents/mayan/${documentId}`;
   return apiClient.get(url);
 };
+
+
+export const getPageById = (
+  documentId: string,
+  fileId: string,
+  pageId: string
+): Promise<AxiosResponse<Blob>> => {
+  const url = `/documents/mayan/${documentId}/files/${fileId}/pages/${pageId}/image/`;
+
+  return apiClient.get(url, {
+    responseType: "blob", // IMPORTANT
+  });
+};
+
 
 export const deleteMayanDocument = (
   documentId: string

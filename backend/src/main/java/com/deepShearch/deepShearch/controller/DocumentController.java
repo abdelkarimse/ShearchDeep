@@ -1,4 +1,6 @@
 package com.deepShearch.deepShearch.controller;
+import com.deepShearch.deepShearch.Dto.*;
+import org.apache.james.mime4j.dom.Multipart;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -9,10 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.deepShearch.deepShearch.Dto.AiSumarizeResponse;
-import com.deepShearch.deepShearch.Dto.MayanDocumentResponse;
-import com.deepShearch.deepShearch.Dto.MayanDocumentUploadRequest;
-import com.deepShearch.deepShearch.Dto.MayanDocumentsListResponse;
 import com.deepShearch.deepShearch.services.interfaces.Llmservice;
 import com.deepShearch.deepShearch.services.interfaces.MayanService;
 
@@ -22,7 +20,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @AllArgsConstructor
     @RequestMapping("/api/v1/documents")
-public class DocumentController {
+ public class DocumentController {
     private Llmservice llmservice;
     private MayanService mayanService;
 
@@ -62,7 +60,14 @@ public class DocumentController {
     public Mono<Void> deleteMayanDocument(@PathVariable String documentId) {
         return mayanService.deleteDocument(documentId);
     }
-
+    @GetMapping("/mayan/{documentId}")
+    public Mono<DocumentFilesResponse> getDocumentById(@PathVariable String documentId) {
+        return mayanService.getDocumentsById(documentId);
+    }
+    @GetMapping("/mayan/{documentId}/files/{fileId}/pages/{pageId}/image/")
+    public Mono<ResponseEntity<byte[]>> getDocumentByIdwithpage(@PathVariable String documentId, @PathVariable String fileId, @PathVariable String pageId) {
+        return mayanService.getDocumentsByIdwithPageId(documentId, fileId, pageId);
+    }
 
 
     @PostMapping(value = "/mayan/upload", consumes = "multipart/form-data")
