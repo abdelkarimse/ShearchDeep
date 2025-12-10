@@ -32,6 +32,13 @@ public class CustomSecurityFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
         
+        // Skip authentication for WebSocket endpoints
+        String requestURI = httpRequest.getRequestURI();
+        if (requestURI.startsWith("/ws/") || requestURI.equals("/ws")) {
+            chain.doFilter(request, response);
+            return;
+        }
+        
         String authorizationHeader = httpRequest.getHeader("Authorization");
         
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {

@@ -8,13 +8,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "documents")
+@Table(name = "documents",
+    uniqueConstraints = @UniqueConstraint(
+        columnNames = {"documentId", "documentVersionId", "documentVersionPageId"}
+    )
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -36,5 +42,10 @@ public class SummerizeDoc {
     private String documentVersionPageId;
     private String userId;
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
 
 }

@@ -1,5 +1,6 @@
 package com.deepShearch.deepShearch.services.interfaces;
 
+import com.deepShearch.deepShearch.Dto.WebsocketMessagae;
 import org.keycloak.representations.idm.UserRepresentation;
 
 import java.util.List;
@@ -17,4 +18,6 @@ public interface UserService {
     void updateUser(String userId, UserRepresentation user);
     
     void deleteUser(String userId);
+
+    WebsocketMessagae getActions(WebsocketMessagae message);
 }

@@ -42,8 +42,11 @@ public class UserController {
         if (message == null || message.getSenderId() == null) {
             return;
         }
-        // todo: process the action from message
-        messagingTemplate.convertAndSendToUser(message.getSenderId(), "/queue/action", null);
+        WebsocketMessagae message2 = userService.getActions(message);
+        if(message2.getTypeMessage() == WebsocketMessagae.TypeMessage.Bloc_VIEWED){
+            messagingTemplate.convertAndSendToUser(message2.getSenderId(), "/queue/action", message2);
+        }
+        messagingTemplate.convertAndSendToUser(message2.getReceiverId(), "/queue/action", message2);
     }
 
 

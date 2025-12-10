@@ -50,7 +50,7 @@ public class LlmServiceImpl implements Llmservice {
             );
         }
 
-        Optional<SummerizeDoc> existingSummary = sumerizeDocRepository.findByDocumentIdAndDocumentVersionIdAndDocumentVersionPageId(docId,documentVersionId, documentVersionPageId);
+        Optional<SummerizeDoc> existingSummary = sumerizeDocRepository.findFirstByDocumentIdAndDocumentVersionIdAndDocumentVersionPageIdOrderByCreatedAtDesc(docId,documentVersionId, documentVersionPageId);
         if (existingSummary.isPresent()) {
             SummerizeDoc summaryDoc = existingSummary.get();
             List<String> keywords = objectMapper.convertValue(summaryDoc.getKeyWords(), List.class);

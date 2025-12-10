@@ -17,4 +17,5 @@ public class DocumentView {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long documentId;
     private List<String> BlockedViwedByUsers;
+    private List<String> ViewedByUsers;
 }
