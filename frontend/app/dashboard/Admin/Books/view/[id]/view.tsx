@@ -86,8 +86,7 @@ export default function DocumentViewPage() {
       // Fetch document data from API
       getMayanDocumentById(documentId)
         .then((response) => {
-          console.log("Fetched document:", response.data);
-          setDocument(response.data);
+=          setDocument(response.data);
           // Map API response to Page interface
           const documentPages: Page[] = response.data.results.map(
             (page: any) => ({

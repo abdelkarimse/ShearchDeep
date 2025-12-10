@@ -78,11 +78,26 @@ export interface PageDocument {
   page_number: number;
   url: string;
 }
-export interface MayanDocument {
+export interface MayanDocumentDetails {
   count: number;
   previosu: string | null;
   next: string | null;
   results: PageDocument[];
+}
+export interface MayanDocument {
+  id: string;
+  label: string;
+  description: string;
+  datetime_created: string;
+  document_type:{
+    label:string;
+  },
+  language: string;
+
+
+  file_latest?: {
+    id: number;
+  };
 }
 
 export interface PaginatedResponse<T> {
@@ -182,7 +197,7 @@ export const getMayanDocuments = (
 
 export const getMayanDocumentById = (
   documentId: string
-): Promise<AxiosResponse<MayanDocument>> => {
+): Promise<AxiosResponse<MayanDocumentDetails>> => {
   const url = `/documents/mayan/${documentId}`;
   return apiClient.get(url);
 };
