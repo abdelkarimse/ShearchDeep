@@ -37,7 +37,9 @@ export default function DocumentViewPage() {
   const [zoom, setZoom] = useState(1);
   const [document, setDocument] = useState<MayanDocument | null>(null);
   const [pages, setPages] = useState<Page[]>([]);
-  const [pageImageUrls, setPageImageUrls] = useState<Record<number, string>>({});
+  const [pageImageUrls, setPageImageUrls] = useState<Record<number, string>>(
+    {}
+  );
   const [loading, setLoading] = useState(true);
   const [isReaderPopupOpen, setIsReaderPopupOpen] = useState(false);
   const bookRef = useRef<any>(null);
@@ -86,7 +88,7 @@ export default function DocumentViewPage() {
       // Fetch document data from API
       getMayanDocumentById(documentId)
         .then((response) => {
-=          setDocument(response.data);
+          setDocument(response.data);
           // Map API response to Page interface
           const documentPages: Page[] = response.data.results.map(
             (page: any) => ({
@@ -126,7 +128,7 @@ export default function DocumentViewPage() {
         try {
           const { documentId, fileId, pageId } = extractFromUrl(page.image_url);
           const response = await getPageById(documentId, fileId, pageId);
-          
+
           // Create object URL from blob
           const blob = response.data;
           const objectUrl = URL.createObjectURL(blob);
