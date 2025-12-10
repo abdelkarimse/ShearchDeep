@@ -13,9 +13,6 @@ public class WebsocketMessagae {
     private TypeMessage typeMessage ;
     private String DocumentId ;
     private UserRepresentationwithBloced user ;
-    private List<UserRepresentationwithBloced> users ;
-
-
     public enum TypeMessage {
     DOCUMENT8Viewed,
         Bloc_VIEWED,

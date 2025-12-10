@@ -21,7 +21,6 @@ export interface WebsocketMessagae {
   typeMessage: TypeMessage;
   documentId?: string;
   user?: Reader;
-  users?: Reader[];
 }
 
 // ---- STOMP client singleton ----
