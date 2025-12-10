@@ -62,7 +62,13 @@ export default function DashboardLayout() {
         onMouseEnter={() => setMouseColor("black")}
         onMouseLeave={() => setMouseColor("white")} // optional reset
       >
-        <Upload isOpen={isopen} onClose={() => setopen(false)}></Upload>
+        <Upload
+          isOpen={isopen}
+          onClose={() => setopen(false)}
+          setaction={() => {
+            setaction(!action);
+          }}
+        ></Upload>
         <div
           data-slot="card"
           className={

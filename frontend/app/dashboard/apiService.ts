@@ -1,38 +1,53 @@
 import axios, { AxiosResponse } from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082/api/v1";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082/api/v1";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
 
 // Add request interceptor to log requests
-apiClient.interceptors.request.use((config) => {
-  console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`, {
-    headers: config.headers,
-  });
-  return config;
-}, (error) => {
-  console.error("[API Request Error]", error);
-  return Promise.reject(error);
-});
+apiClient.interceptors.request.use(
+  (config) => {
+    console.log(
+      `[API Request] ${config.method?.toUpperCase()} ${config.baseURL}${
+        config.url
+      }`,
+      {
+        headers: config.headers,
+      }
+    );
+    return config;
+  },
+  (error) => {
+    console.error("[API Request Error]", error);
+    return Promise.reject(error);
+  }
+);
 
 // Add response interceptor to log responses
-apiClient.interceptors.response.use((response) => {
-  console.log(`[API Response] ${response.status} ${response.config.url}`, response.data);
-  return response;
-}, (error) => {
-  console.error("[API Response Error]", {
-    message: error.message,
-    status: error.response?.status,
-    statusText: error.response?.statusText,
-    data: error.response?.data,
-    url: error.config?.url,
-    code: error.code,
-    fullError: error.toString(),
-  });
-  return Promise.reject(error);
-});
+apiClient.interceptors.response.use(
+  (response) => {
+    console.log(
+      `[API Response] ${response.status} ${response.config.url}`,
+      response.data
+    );
+    return response;
+  },
+  (error) => {
+    console.error("[API Response Error]", {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+      code: error.code,
+      fullError: error.toString(),
+    });
+    return Promise.reject(error);
+  }
+);
 
 export function setTokenHeader(token: string) {
   console.log("Setting token header");
@@ -56,12 +71,12 @@ export interface UserCreatePayload {
 }
 
 export interface PageDocument {
-    document_file_id : number;
-    document_file_url : string;
-    id : number;
-    image_url : string;
-    page_number : number;
-    url : string;
+  document_file_id: number;
+  document_file_url: string;
+  id: number;
+  image_url: string;
+  page_number: number;
+  url: string;
 }
 export interface MayanDocument {
   count: number;
@@ -165,15 +180,12 @@ export const getMayanDocuments = (
   return apiClient.get(url, { params: queryParams });
 };
 
-
-
 export const getMayanDocumentById = (
   documentId: string
 ): Promise<AxiosResponse<MayanDocument>> => {
   const url = `/documents/mayan/${documentId}`;
   return apiClient.get(url);
 };
-
 
 export const getPageById = (
   documentId: string,
@@ -187,10 +199,20 @@ export const getPageById = (
   });
 };
 
-
 export const deleteMayanDocument = (
   documentId: string
 ): Promise<AxiosResponse> => {
   const url = `/documents/mayan/${documentId}`;
   return apiClient.delete(url);
+};
+export const addDocument = async (formData: any) => {
+  const response = await apiClient.post("/documents/mayan/upload", formData, {
+    headers: {
+      // Note: Axios automatically sets 'Content-Type': 'multipart/form-data'
+      // when a FormData object is passed, but it's good practice to ensure
+      // the API understands it.
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response;
 };
