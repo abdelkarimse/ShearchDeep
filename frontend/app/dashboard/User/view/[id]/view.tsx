@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import { useParams } from "next/navigation";
 import HTMLFlipBook from "react-pageflip";
 import {
@@ -17,21 +16,36 @@ import {
   setTokenHeader,
   MayanDocument,
   getPageById,
+  summarizeDocumentPage,
 } from "@/app/dashboard/apiService";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
+import {
+  connectWebSocket,
+  sendActionMessage,
+  disconnectWebSocket,
+} from "@/app/dashboard/webSocketConnection";
 
 interface Page {
   id: number;
   image_url: string;
 }
 
+interface Reader {
+  id: string;
+  username: string;
+  email: string;
+  readTime: number;
+  lastAccessed: string;
+  isBlocked: boolean;
+}
+
 export default function DocumentViewPage({
-  visible,
-  setvisible,
+  setResponse,
+  setVisible
 }: {
-  visible: boolean;
-  setvisible: any;
+  setResponse: any;
+  setVisible: any;
 }) {
   const params = useParams();
   const documentId = params?.id as string;
@@ -45,36 +59,7 @@ export default function DocumentViewPage({
     {}
   );
   const [loading, setLoading] = useState(true);
-  const [isReaderPopupOpen, setIsReaderPopupOpen] = useState(false);
   const bookRef = useRef<any>(null);
-
-  const [readers, setReaders] = useState<Reader[]>([
-    {
-      id: "1",
-      username: "John Doe",
-      email: "john.doe@example.com",
-      readTime: 45,
-      lastAccessed: "2025-12-09T10:30:00.000Z",
-      isBlocked: false,
-    },
-    {
-      id: "2",
-      username: "Jane Smith",
-      email: "jane.smith@example.com",
-      readTime: 30,
-      lastAccessed: "2025-12-08T14:20:00.000Z",
-      isBlocked: false,
-    },
-    {
-      id: "3",
-      username: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      readTime: 15,
-      lastAccessed: "2025-12-07T09:15:00.000Z",
-      isBlocked: true,
-    },
-  ]);
-  const hasReaders = readers.length > 0;
 
   const extractFromUrl = (url: string) => {
     const parts = url.split("/").filter(Boolean);
@@ -85,6 +70,70 @@ export default function DocumentViewPage({
 
     return { documentId, fileId, pageId };
   };
+
+  const [stompClient, setStompClient] = useState<any>(null);
+
+  useEffect(() => {
+    if (session?.accessToken && documentId && session?.user?.id) {
+      const client = connectWebSocket(session, session.accessToken);
+      setStompClient(client);
+      
+      // Wait for connection before sending message
+      const checkConnectionAndSend = setInterval(() => {
+        if (client?.connected) {
+          sendActionMessage(
+            {
+              senderId: session.user.id,
+              typeMessage: "DOCUMENT8Viewed",
+              documentId: documentId,
+            },
+            session.accessToken,
+            client
+          );
+          clearInterval(checkConnectionAndSend);
+        }
+      }, 100);
+
+      return () => {
+        clearInterval(checkConnectionAndSend);
+        if (client?.connected) {
+          sendActionMessage(
+            {
+              senderId: session.user.id,
+              typeMessage: "CLOSEBOOKSVIWER",
+              documentId: documentId,
+            },
+            session.accessToken,
+            client
+          );
+        }
+        disconnectWebSocket();
+      };
+    }
+  }, [session, documentId]);
+
+  // Handle page close/navigation
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (session?.accessToken && session?.user?.id && documentId && stompClient?.connected) {
+        sendActionMessage(
+          {
+            senderId: session.user.id,
+            typeMessage: "CLOSEBOOKSVIWER",
+            documentId: documentId,
+          },
+          session.accessToken,
+          stompClient
+        );
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [session, documentId, stompClient]);
 
   useEffect(() => {
     if (session?.accessToken && documentId) {
@@ -148,14 +197,17 @@ export default function DocumentViewPage({
 
     fetchImages();
 
-    // Cleanup: revoke object URLs when component unmounts or pages change
     return () => {
       Object.values(pageImageUrls).forEach((url) => {
         if (url) URL.revokeObjectURL(url);
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pages, session?.accessToken]);
+
+  useEffect(() => {
+    setResponse(null);
+    setVisible(false);
+  }, [currentPage]);
 
   const handleNextPage = () => {
     if (bookRef.current) {
@@ -180,23 +232,28 @@ export default function DocumentViewPage({
   };
 
   const handleGoBack = () => {
+    if (session?.user?.id && session?.accessToken && stompClient?.connected) {
+      sendActionMessage(
+        {
+          senderId: session.user.id,
+          typeMessage: "CLOSEBOOKSVIWER",
+          documentId: documentId,
+        },
+        session.accessToken,
+        stompClient
+      );
+    }
     globalThis.history.back();
   };
+  const handleSumerize = (page :Page ) => {
+    setVisible(true);
+    const { documentId, fileId, pageId } = extractFromUrl(page.image_url);
+    const   userid=session?.user.id as string;
+    summarizeDocumentPage(documentId, fileId, pageId, userid).then((res)=>setResponse(res.data));
+    
+  }
 
-  const handleOpenReaderPopup = () => {
-    setIsReaderPopupOpen(true);
-  };
-
-  const handleBlockAccess = (userId: string) => {
-    setReaders((prevReaders) =>
-      prevReaders.map((reader) =>
-        reader.id === userId
-          ? { ...reader, isBlocked: !reader.isBlocked }
-          : reader
-      )
-    );
-  };
-
+ 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-white">
@@ -270,7 +327,7 @@ export default function DocumentViewPage({
             </button>
             <button
               onClick={() => {
-                setvisible(!visible);
+                handleSumerize(pages[currentPage]);
               }}
               className="relative flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-900 text-white rounded-md transition font-medium"
               type="button"

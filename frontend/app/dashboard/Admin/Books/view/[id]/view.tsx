@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import HTMLFlipBook from "react-pageflip";
 import {
@@ -20,8 +20,11 @@ import {
 } from "@/app/dashboard/apiService";
 import { useSession } from "next-auth/react";
 import type { Session } from "next-auth";
-import PopupReader, { Reader } from "./popup-reader";
-import { url } from "inspector/promises";
+import PopupReader from "./popup-reader";
+import { connectWebSocket, disconnectWebSocket, sendActionMessage, WebsocketMessagae } from "@/app/dashboard/webSocketConnection";
+import { on } from "events";
+import { useReaderStore } from "@/app/Zustand/readerStore";
+import type { Reader } from "@/app/Zustand/readerStore";
 
 interface Page {
   id: number;
@@ -44,33 +47,60 @@ export default function DocumentViewPage() {
   const [isReaderPopupOpen, setIsReaderPopupOpen] = useState(false);
   const bookRef = useRef<any>(null);
 
-  const [readers, setReaders] = useState<Reader[]>([
-    {
-      id: "1",
-      username: "John Doe",
-      email: "john.doe@example.com",
-      readTime: 45,
-      lastAccessed: "2025-12-09T10:30:00.000Z",
-      isBlocked: false,
-    },
-    {
-      id: "2",
-      username: "Jane Smith",
-      email: "jane.smith@example.com",
-      readTime: 30,
-      lastAccessed: "2025-12-08T14:20:00.000Z",
-      isBlocked: false,
-    },
-    {
-      id: "3",
-      username: "Bob Johnson",
-      email: "bob.johnson@example.com",
-      readTime: 15,
-      lastAccessed: "2025-12-07T09:15:00.000Z",
-      isBlocked: true,
-    },
-  ]);
-  const hasReaders = readers.length > 0;
+  const readersList = useReaderStore((state) => state.readers);
+  const addReader = useReaderStore((state) => state.addReader);
+  const removeReader = useReaderStore((state) => state.removeReader);
+  const toggleBlockReader = useReaderStore((state) => state.toggleBlockReader);
+  const [stompClient, setStompClient] = useState<any>(null);
+  const readers = useMemo(() => readersList.filter(reader => reader.documentId === documentId), [readersList, documentId]); 
+  const hasReaders = useMemo(() => readers.filter(reader => reader.readTime < 10).length > 0, [readers]); 
+  console.log("All readers:", readersList);
+  console.log("Filtered readers for document", documentId, ":", readers); 
+  const onActionMessage = (message: WebsocketMessagae) => {
+    console.log("Received WebSocket message:", message);
+    if(message.typeMessage === "GETBOOKSVIWER" ) {
+      const updatedReader: Reader = {
+        id: message.senderId,
+        username: message.user?.username || "Unknown",
+        email: message.user?.email || "No email",
+        readTime: message.user?.readTime || 0,
+        lastAccessed: message.user?.lastAccessed || new Date().toISOString(),
+        isBlocked: message.user?.isBlocked || false,
+        documentId: documentId,
+      };
+      addReader(updatedReader);
+    }
+    if(message.typeMessage === "CLOSEBOOKSVIWER" ) {
+      removeReader(message.senderId);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.accessToken && documentId && session?.user?.id) {
+      const client = connectWebSocket(session, session.accessToken, onActionMessage);
+      setStompClient(client);
+      
+      const checkConnectionAndSend = setInterval(() => {
+        if (client?.connected) {
+          sendActionMessage(
+            {
+              senderId: session.user.id,
+              typeMessage: "GETBOOKSVIWER",
+              documentId: documentId,
+            },
+            session.accessToken,
+            client
+          );
+          clearInterval(checkConnectionAndSend);
+        }
+      }, 100);
+
+      return () => {
+        clearInterval(checkConnectionAndSend);
+        disconnectWebSocket();
+      };
+    }
+  }, [documentId]);
 
   const extractFromUrl = (url: string) => {
     const parts = url.split("/").filter(Boolean);
@@ -183,13 +213,16 @@ export default function DocumentViewPage() {
   };
 
   const handleBlockAccess = (userId: string) => {
-    setReaders((prevReaders) =>
-      prevReaders.map((reader) =>
-        reader.id === userId
-          ? { ...reader, isBlocked: !reader.isBlocked }
-          : reader
-      )
+    sendActionMessage(
+      {
+        senderId: userId,
+        typeMessage: "Bloc_VIEWED",
+        documentId: documentId,
+      },
+      session?.accessToken || "",
+      stompClient
     );
+    toggleBlockReader(userId);
   };
 
   if (loading) {
@@ -342,6 +375,7 @@ export default function DocumentViewPage() {
       <PopupReader
         isOpen={isReaderPopupOpen}
         onClose={() => setIsReaderPopupOpen(false)}
+        documentTitle={document?.label || "Document"}
         readers={readers}
         onBlockAccess={handleBlockAccess}
       />

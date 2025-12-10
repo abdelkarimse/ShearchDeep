@@ -99,7 +99,7 @@ const fetchDocuments = async () => {
 
       <div className="flex items-center justify-center px-8 py-6 bg-gradient-to-b from-gray-50 to-white">
         <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-800 text-center">
-          Welcome to Access Our Documents
+          Welcome to <span className="text-indigo-600">Coffre-Fort</span>
         </h2>
       </div>
 

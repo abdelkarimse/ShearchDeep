@@ -10,14 +10,6 @@ const apiClient = axios.create({
 // Add request interceptor to log requests
 apiClient.interceptors.request.use(
   (config) => {
-    console.log(
-      `[API Request] ${config.method?.toUpperCase()} ${config.baseURL}${
-        config.url
-      }`,
-      {
-        headers: config.headers,
-      }
-    );
     return config;
   },
   (error) => {
@@ -26,28 +18,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response interceptor to log responses
-apiClient.interceptors.response.use(
-  (response) => {
-    console.log(
-      `[API Response] ${response.status} ${response.config.url}`,
-      response.data
-    );
-    return response;
-  },
-  (error) => {
-    console.error("[API Response Error]", {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      url: error.config?.url,
-      code: error.code,
-      fullError: error.toString(),
-    });
-    return Promise.reject(error);
-  }
-);
+
 
 export function setTokenHeader(token: string) {
   console.log("Setting token header");

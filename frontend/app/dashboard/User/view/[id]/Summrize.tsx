@@ -1,14 +1,17 @@
+import { AiSummarizeResponse } from "@/app/dashboard/apiService";
+
 export default function SumrrizeAI({
-  text,
+  response ,
   setMouseColor,
   closeSumrize,
 }: {
-  text: string;
+  response: AiSummarizeResponse | null;
   setMouseColor: (x: string) => void;
   closeSumrize: () => void;
 }) {
+  console.log("SumrrizeAI response 222 :", response);
   // Determine if text is empty for loading state
-  const isLoading = !text;
+  const isLoading = !response;
 
   // Handle mouse events based on your original logic
   const handleMouseEnter = () => setMouseColor("black");
@@ -69,10 +72,36 @@ export default function SumrrizeAI({
               <p className="text-xs font-medium">Summarizing...</p>
             </div>
           ) : (
-            // Displayed Summary Text
-            <p className="text-gray-700 text-sm leading-snug whitespace-pre-wrap">
-              {text}
-            </p>
+            <div className="space-y-4">
+              {/* Keywords Section */}
+              {response.keywords && response.keywords.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-800 mb-2 uppercase tracking-wide">
+                    Keywords
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {response.keywords.map((keyword, index) => (
+                      <span
+                        key={`${keyword}-${index}`}
+                        className="px-2 py-1 bg-black text-white text-xs rounded-full font-medium"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Summary Section */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-800 mb-2 uppercase tracking-wide">
+                  Summary
+                </h4>
+                <p className="text-gray-700 text-sm leading-snug whitespace-pre-wrap">
+                  {response.summary}
+                </p>
+              </div>
+            </div>
           )}
         </div>
 

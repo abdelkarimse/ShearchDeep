@@ -5,13 +5,14 @@ import { useState } from "react";
 import SumrrizeAI from "./Summrize";
 export default function Page() {
   const { setMouseColor } = useStore();
-  const [visible, setvisible] = useState(false);
+  const [response, setResponse] = useState(null);
+  const [visible , setVisible ] = useState(false);  
   return (
     // 1. Changed to flex-row and items-start (or items-center)
     <div className="h-screen w-full flex justify-center items-start pt-4">
       {/* Container for the existing content (now 90% wide) */}
       <div
-        style={{ width: visible ? "70%" : "90%", height: "95%" }} // 2. Reduced width to 90%
+        style={{ width: response ? "70%" : "90%", height: "95%" }} // 2. Reduced width to 90%
         onMouseEnter={() => setMouseColor("black")}
         onMouseLeave={() => setMouseColor("white")}
       >
@@ -23,7 +24,7 @@ export default function Page() {
           style={{ height: "100%" }}
         >
           <div style={{ height: "100%" }}>
-            <DocumentViewPage visible={visible} setvisible={setvisible} />
+            <DocumentViewPage  setResponse={setResponse} setVisible={setVisible} />
           </div>
         </div>
       </div>
@@ -35,9 +36,10 @@ export default function Page() {
       {/* I'll use a margin-left (ml-2) to create the small distance. */}
       {visible ? (
         <SumrrizeAI
-          text=""
+          response={response}
           setMouseColor={setMouseColor}
-          closeSumrize={() => setvisible(false)}
+          closeSumrize={() => setVisible(false)}
+          
         />
       ) : null}
     </div>
