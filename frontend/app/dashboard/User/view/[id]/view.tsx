@@ -26,7 +26,13 @@ interface Page {
   image_url: string;
 }
 
-export default function DocumentViewPage() {
+export default function DocumentViewPage({
+  visible,
+  setvisible,
+}: {
+  visible: boolean;
+  setvisible: any;
+}) {
   const params = useParams();
   const documentId = params?.id as string;
   const { data: session } = useSession() as { data: Session | null };
@@ -263,7 +269,9 @@ export default function DocumentViewPage() {
               <ZoomIn className="w-5 h-5 text-black" />
             </button>
             <button
-              onClick={handleOpenReaderPopup}
+              onClick={() => {
+                setvisible(!visible);
+              }}
               className="relative flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-900 text-white rounded-md transition font-medium"
               type="button"
             >
